@@ -1,4 +1,4 @@
-//src/pages/DashboardPage.jsx
+// src/pages/DashboardPage.jsx (Atualizado com navegação para importação)
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -30,6 +30,11 @@ const DashboardPage = () => {
     }
   };
 
+  // Função para navegar para a tela de importação de despesas
+  const navigateToImportExpenses = () => {
+    navigate('/import-expenses');
+  };
+
   if (!user) {
     return <div className="loading">Carregando...</div>;
   }
@@ -38,9 +43,17 @@ const DashboardPage = () => {
     <div className="dashboard-container">
       <header className="dashboard-header">
         <h1>Dashboard</h1>
-        <button className="logout-button" onClick={handleLogout}>
-          Sair
-        </button>
+        <div className="dashboard-actions">
+          <button 
+            className="import-button" 
+            onClick={navigateToImportExpenses}
+          >
+            Importar Despesas
+          </button>
+          <button className="logout-button" onClick={handleLogout}>
+            Sair
+          </button>
+        </div>
       </header>
       
       <div className="dashboard-content">
@@ -56,7 +69,30 @@ const DashboardPage = () => {
             <p>Email: {user.get('email') || 'Não informado'}</p>
           </div>
           
-          {/* Outros cards podem ser adicionados aqui */}
+          <div className="dashboard-card">
+            <h3>Relatórios de Despesas</h3>
+            <p>Utilize o sistema para gerenciar as despesas de marketing:</p>
+            <ul className="dashboard-actions-list">
+              <li>
+                <button 
+                  className="action-button" 
+                  onClick={navigateToImportExpenses}
+                >
+                  Importar planilha de despesas
+                </button>
+              </li>
+              <li>
+                <button className="action-button" disabled>
+                  Ver relatórios (em breve)
+                </button>
+              </li>
+              <li>
+                <button className="action-button" disabled>
+                  Gerenciar categorias (em breve)
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

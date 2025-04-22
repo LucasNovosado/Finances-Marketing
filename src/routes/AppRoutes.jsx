@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
+import ImportExpensePage from '../pages/ImportExpensePage';
+import { ImportExpenseProvider } from "../contexts/ImportExpenseContext.jsx";
 import authService from '../services/authService';
 
 /**
@@ -62,6 +64,18 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Rota protegida - Importação de Despesas */}
+      <Route 
+        path="/import-expenses" 
+        element={
+          <ProtectedRoute>
+            <ImportExpenseProvider>
+              <ImportExpensePage />
+            </ImportExpenseProvider>
           </ProtectedRoute>
         } 
       />
