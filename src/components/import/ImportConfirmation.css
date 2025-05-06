@@ -1,0 +1,124 @@
+/* src/components/import/ImportConfirmation.css */
+
+.confirmation-container {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .confirmation-icon {
+    font-size: 4rem;
+    color: #28a745;
+    margin-bottom: 1.5rem;
+  }
+  
+  .confirmation-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #28a745;
+    margin-bottom: 1rem;
+  }
+  
+  .confirmation-message {
+    font-size: 1.1rem;
+    color: #495057;
+    margin-bottom: 2rem;
+    max-width: 80%;
+  }
+  
+  .confirmation-stats {
+    width: 100%;
+    max-width: 500px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+  
+  .confirmation-stats-title {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 1rem;
+    text-align: left;
+  }
+  
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .stats-row:last-child {
+    border-bottom: none;
+  }
+  
+  .stats-label {
+    font-weight: 500;
+    color: #6c757d;
+    text-align: left;
+  }
+  
+  .stats-value {
+    font-weight: 600;
+    color: #495057;
+  }
+  
+  .confirmation-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .new-import-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .new-import-button:hover {
+    background-color: #3a7bc8;
+  }
+  
+  .dashboard-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .dashboard-button:hover {
+    background-color: #5a6268;
+  }
+  
+  @media (max-width: 768px) {
+    .confirmation-message {
+      max-width: 100%;
+    }
+    
+    .confirmation-stats {
+      max-width: 100%;
+    }
+    
+    .confirmation-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+    
+    .new-import-button,
+    .dashboard-button {
+      width: 100%;
+    }
+  }
