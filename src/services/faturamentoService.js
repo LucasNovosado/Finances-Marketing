@@ -3,38 +3,57 @@
 import Parse from 'parse/dist/parse.min.js';
 
 /**
- * Serviço para gerenciar operações relacionadas ao faturamento
+ * Serviço que gerencia as operações relacionadas ao faturamento mensal
  */
 const faturamentoService = {
   /**
-   * Busca os dados de faturamento para um mês/ano específico
-   * @param {Number} mes - Mês do faturamento (1-12)
-   * @param {Number} ano - Ano do faturamento
-   * @returns {Promise<Object>} - Promise resolvida com objeto de faturamento
+   * Versão SIMPLIFICADA — usada na dashboard financeira
+   * Retorna total com e sem sucata
+   */
+  getFaturamentoMensal: async (mes, ano) => {
+    try {
+      const query = new Parse.Query('FaturamentoMensal');
+      query.equalTo('mes', mes);
+      query.equalTo('ano', ano);
+      const resultado = await query.first();
+
+      if (resultado) {
+        return {
+          fatCheio: resultado.get('fatCheio') || 0,
+          fatSucata: resultado.get('fatSucata') || 0
+        };
+      } else {
+        console.warn(`Nenhum dado de faturamento encontrado para ${mes}/${ano}`);
+        return { fatCheio: 0, fatSucata: 0 };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar faturamento mensal:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Versão DETALHADA — usada no gerenciamento por supervisor
    */
   getFaturamentoByMonthYear: async (mes, ano) => {
     try {
       const Faturamento = Parse.Object.extend('FaturamentoMensal');
-      
-      // Query para buscar o registro COM sucata
+
       const queryComSucata = new Parse.Query(Faturamento);
       queryComSucata.equalTo('mes', mes);
       queryComSucata.equalTo('ano', ano);
       queryComSucata.equalTo('ComSucata', true);
-      
-      // Query para buscar o registro SEM sucata
+
       const querySemSucata = new Parse.Query(Faturamento);
       querySemSucata.equalTo('mes', mes);
       querySemSucata.equalTo('ano', ano);
       querySemSucata.equalTo('ComSucata', false);
-      
-      // Executa as duas queries em paralelo
+
       const [resultComSucata, resultSemSucata] = await Promise.all([
         queryComSucata.first(),
         querySemSucata.first()
       ]);
-      
-      // Prepara o objeto de retorno
+
       const returnObject = {
         mes,
         ano,
@@ -59,8 +78,7 @@ const faturamentoService = {
         totalComSucata: 0,
         totalSemSucata: 0
       };
-      
-      // Se existir um registro COM sucata, preenche os dados correspondentes
+
       if (resultComSucata) {
         returnObject.id = resultComSucata.id;
         returnObject.faturamentoComSucata = {
@@ -74,14 +92,12 @@ const faturamentoService = {
         };
         returnObject.totalComSucata = calculateTotal(resultComSucata);
       }
-      
-      // Se existir um registro SEM sucata, preenche os dados correspondentes
+
       if (resultSemSucata) {
-        // Se não tiver ID ainda, usa o do registro SEM sucata
         if (!returnObject.id) {
           returnObject.id = resultSemSucata.id;
         }
-        
+
         returnObject.faturamentoSemSucata = {
           Wellington: resultSemSucata.get('fatWellington') || '',
           Alan: resultSemSucata.get('fatAlan') || '',
@@ -93,75 +109,54 @@ const faturamentoService = {
         };
         returnObject.totalSemSucata = calculateTotal(resultSemSucata);
       }
-      
+
       return returnObject;
     } catch (error) {
-      console.error('Erro ao buscar faturamento:', error);
+      console.error('Erro ao buscar faturamento detalhado:', error);
       throw error;
     }
   },
 
-  /**
-   * Salva os dados de faturamento para um mês/ano específico
-   * @param {Object} faturamentoData - Dados de faturamento a serem salvos
-   * @returns {Promise<Object>} - Promise resolvida com o objeto salvo
-   */
   saveFaturamento: async (faturamentoData) => {
     try {
       const Faturamento = Parse.Object.extend('FaturamentoMensal');
-      
-      // Busca registros existentes para o mês/ano
+
       const queryComSucata = new Parse.Query(Faturamento);
       queryComSucata.equalTo('mes', faturamentoData.mes);
       queryComSucata.equalTo('ano', faturamentoData.ano);
       queryComSucata.equalTo('ComSucata', true);
-      
+
       const querySemSucata = new Parse.Query(Faturamento);
       querySemSucata.equalTo('mes', faturamentoData.mes);
       querySemSucata.equalTo('ano', faturamentoData.ano);
       querySemSucata.equalTo('ComSucata', false);
-      
-      // Executa as queries em paralelo
+
       const [existingComSucata, existingSemSucata] = await Promise.all([
         queryComSucata.first(),
         querySemSucata.first()
       ]);
-      
-      // Prepara o objeto para salvar com sucata
+
       let faturamentoComSucata = existingComSucata || new Faturamento();
-      
       faturamentoComSucata.set('mes', faturamentoData.mes);
       faturamentoComSucata.set('ano', faturamentoData.ano);
       faturamentoComSucata.set('ComSucata', true);
-      faturamentoComSucata.set('fatWellington', faturamentoData.faturamentoComSucata.Wellington || '');
-      faturamentoComSucata.set('fatAlan', faturamentoData.faturamentoComSucata.Alan || '');
-      faturamentoComSucata.set('fatReacao', faturamentoData.faturamentoComSucata.Reacao || '');
-      faturamentoComSucata.set('fatAlexandre', faturamentoData.faturamentoComSucata.Alexandre || '');
-      faturamentoComSucata.set('fatHeitor', faturamentoData.faturamentoComSucata.Heitor || '');
-      faturamentoComSucata.set('fatCarlos', faturamentoData.faturamentoComSucata.Carlos || '');
-      faturamentoComSucata.set('fatCassia', faturamentoData.faturamentoComSucata.Cassia || '');
-      
-      // Prepara o objeto para salvar sem sucata
+      Object.entries(faturamentoData.faturamentoComSucata).forEach(([key, value]) =>
+        faturamentoComSucata.set(`fat${key}`, value || '')
+      );
+
       let faturamentoSemSucata = existingSemSucata || new Faturamento();
-      
       faturamentoSemSucata.set('mes', faturamentoData.mes);
       faturamentoSemSucata.set('ano', faturamentoData.ano);
       faturamentoSemSucata.set('ComSucata', false);
-      faturamentoSemSucata.set('fatWellington', faturamentoData.faturamentoSemSucata.Wellington || '');
-      faturamentoSemSucata.set('fatAlan', faturamentoData.faturamentoSemSucata.Alan || '');
-      faturamentoSemSucata.set('fatReacao', faturamentoData.faturamentoSemSucata.Reacao || '');
-      faturamentoSemSucata.set('fatAlexandre', faturamentoData.faturamentoSemSucata.Alexandre || '');
-      faturamentoSemSucata.set('fatHeitor', faturamentoData.faturamentoSemSucata.Heitor || '');
-      faturamentoSemSucata.set('fatCarlos', faturamentoData.faturamentoSemSucata.Carlos || '');
-      faturamentoSemSucata.set('fatCassia', faturamentoData.faturamentoSemSucata.Cassia || '');
-      
-      // Salva os dois objetos em paralelo
+      Object.entries(faturamentoData.faturamentoSemSucata).forEach(([key, value]) =>
+        faturamentoSemSucata.set(`fat${key}`, value || '')
+      );
+
       await Promise.all([
         faturamentoComSucata.save(),
         faturamentoSemSucata.save()
       ]);
-      
-      // Retorna os dados combinados
+
       return {
         id: faturamentoComSucata.id,
         mes: faturamentoData.mes,
@@ -175,59 +170,147 @@ const faturamentoService = {
       console.error('Erro ao salvar faturamento:', error);
       throw error;
     }
+  },
+
+  getHistoricoFaturamento: async (ano) => {
+    try {
+      const query = new Parse.Query('FaturamentoMensal');
+      query.equalTo('ano', ano);
+      query.ascending('mes');
+      const resultados = await query.find();
+
+      return resultados.map(item => ({
+        mes: item.get('mes'),
+        ano: item.get('ano'),
+        fatCheio: item.get('fatCheio'),
+        fatSucata: item.get('fatSucata'),
+        id: item.id
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar histórico de faturamento:', error);
+      throw error;
+    }
+  },
+
+  getLimitesDespesa: async (mes, ano) => {
+    try {
+      const query = new Parse.Query('LimiteDespesa');
+      query.equalTo('mes', mes);
+      query.equalTo('ano', ano);
+      const resultado = await query.first();
+
+      return resultado
+        ? {
+            percentualFatCheio: resultado.get('percentualFatCheio'),
+            percentualFatSucata: resultado.get('percentualFatSucata')
+          }
+        : { percentualFatCheio: 0.75, percentualFatSucata: 0.75 };
+    } catch (error) {
+      console.error('Erro ao buscar limites de despesa:', error);
+      throw error;
+    }
+  },
+
+  saveLimitesDespesa: async (dados) => {
+    try {
+      const query = new Parse.Query('LimiteDespesa');
+      query.equalTo('mes', dados.mes);
+      query.equalTo('ano', dados.ano);
+      const existente = await query.first();
+
+      let limite = existente || new Parse.Object('LimiteDespesa');
+      limite.set('mes', dados.mes);
+      limite.set('ano', dados.ano);
+      limite.set('percentualFatCheio', dados.percentualFatCheio);
+      limite.set('percentualFatSucata', dados.percentualFatSucata);
+      await limite.save();
+      return limite;
+    } catch (error) {
+      console.error('Erro ao salvar limites de despesa:', error);
+      throw error;
+    }
+  },
+
+  calcularDadosFinanceiros: (params) => {
+    const { totalDespesas, faturamento, limites } = params;
+    const percentualGasto = faturamento.fatCheio > 0
+      ? (totalDespesas / faturamento.fatCheio * 100)
+      : 0;
+
+    const valorLimite = faturamento.fatCheio * limites.percentualFatCheio / 100;
+    const percentualUtilizado = valorLimite > 0
+      ? (totalDespesas / valorLimite * 100)
+      : 0;
+
+    let status = 'safe';
+    if (percentualUtilizado >= 100) status = 'danger';
+    else if (percentualUtilizado >= 90) status = 'alert';
+    else if (percentualUtilizado >= 75) status = 'warning';
+
+    return {
+      totalDespesas,
+      faturamentoCheio: faturamento.fatCheio,
+      faturamentoSemSucata: faturamento.fatSucata,
+      limitePercentual: limites.percentualFatCheio,
+      percentualGasto,
+      valorLimite,
+      percentualUtilizado,
+      status
+    };
+  },
+
+  getResumoFinanceiro: async (mes, ano, totalDespesas) => {
+    try {
+      const [faturamento, limites] = await Promise.all([
+        faturamentoService.getFaturamentoMensal(mes, ano),
+        faturamentoService.getLimitesDespesa(mes, ano)
+      ]);
+
+      return faturamentoService.calcularDadosFinanceiros({
+        totalDespesas,
+        faturamento,
+        limites
+      });
+    } catch (error) {
+      console.error('Erro ao calcular resumo financeiro:', error);
+      throw error;
+    }
+  },
+
+  importarFaturamentoCsv: async (arquivo) => {
+    try {
+      console.log('Importando arquivo:', arquivo.name);
+      return {
+        importados: 0,
+        erros: 0,
+        mensagem: 'Funcionalidade ainda não implementada.'
+      };
+    } catch (error) {
+      console.error('Erro ao importar faturamento:', error);
+      throw error;
+    }
   }
 };
 
-/**
- * Função auxiliar para calcular o total do faturamento a partir de um objeto Parse
- * @param {Parse.Object} faturamento - Objeto de faturamento
- * @returns {Number} - Total calculado
- */
+// FUNÇÕES AUXILIARES
 function calculateTotal(faturamento) {
   if (!faturamento) return 0;
-  
-  // Lista de supervisores
   const supervisores = [
-    'fatWellington', 
-    'fatAlan', 
-    'fatReacao', 
-    'fatAlexandre', 
-    'fatHeitor', 
-    'fatCarlos', 
-    'fatCassia'
+    'fatWellington', 'fatAlan', 'fatReacao',
+    'fatAlexandre', 'fatHeitor', 'fatCarlos', 'fatCassia'
   ];
-  
-  // Calcula o total
-  return supervisores.reduce((total, supervisor) => {
-    const valor = faturamento.get(supervisor);
-    if (!valor) return total;
-    
-    // Converte string para número
-    const numValue = typeof valor === 'string' 
-      ? parseFloat(valor.replace(/[^\d.,]/g, '').replace(',', '.'))
-      : parseFloat(valor);
-      
-    return total + (isNaN(numValue) ? 0 : numValue);
+
+  return supervisores.reduce((total, key) => {
+    const value = faturamento.get(key);
+    const num = parseFloat((value || '').toString().replace(/[^\d,.-]/g, '').replace(',', '.'));
+    return total + (isNaN(num) ? 0 : num);
   }, 0);
 }
 
-/**
- * Função auxiliar para calcular o total do faturamento a partir de um objeto de valores
- * @param {Object} valoresObj - Objeto com os valores de faturamento
- * @returns {Number} - Total calculado
- */
-function calculateTotalFromValues(valoresObj) {
-  if (!valoresObj) return 0;
-  
-  return Object.values(valoresObj).reduce((total, valor) => {
-    if (!valor) return total;
-    
-    // Converte string para número
-    const numValue = typeof valor === 'string' 
-      ? parseFloat(valor.replace(/[^\d.,]/g, '').replace(',', '.'))
-      : parseFloat(valor);
-      
-    return total + (isNaN(numValue) ? 0 : numValue);
+function calculateTotalFromValues(obj) {
+  return Object.values(obj || {}).reduce((total, value) => {
+    const num = parseFloat((value || '').toString().replace(/[^\d,.-]/g, '').replace(',', '.'));
+    return total + (isNaN(num) ? 0 : num);
   }, 0);
 }
 

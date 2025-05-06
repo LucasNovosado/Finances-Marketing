@@ -1,8 +1,9 @@
-// src/components/dashboard/DashboardSummary.jsx
+// src/components/dashboard/DashboardSummary.jsx - Modificado com o FinancialSummary
 
 import React, { useState, useEffect } from 'react';
 import ExpenseSummaryByBudget from './ExpenseSummaryByBudget';
 import ExpenseTotalSummary from './ExpenseTotalSummary';
+import FinancialSummary from './FinancialSummary'; // Importando o novo componente
 import expenseService from '../../services/expenseService';
 import './DashboardSummary.css';
 
@@ -119,6 +120,9 @@ const DashboardSummary = () => {
         <div className="dashboard-summary-error">{error}</div>
       ) : (
         <div className="dashboard-summary-content">
+          {/* Componente de análise financeira (novo) */}
+          <FinancialSummary filters={filters} />
+          
           {/* Componente para o total geral de despesas (apenas orçamentos específicos) */}
           <ExpenseTotalSummary 
             totalGeral={summary?.totalGeral || 0}

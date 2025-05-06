@@ -163,7 +163,7 @@ const expenseService = {
       
       // Busca valores únicos para o campo 'orcamento'
       query.select('orcamento');
-      query.limit(1000); // Limite alto para garantir que todos os valores sejam recuperados
+      query.limit(100000); // Limite alto para garantir que todos os valores sejam recuperados
       
       const results = await query.find();
       
@@ -173,6 +173,21 @@ const expenseService = {
       return budgets.sort();
     } catch (error) {
       console.error('Erro ao buscar orçamentos disponíveis:', error);
+      throw error;
+    }
+  },
+  /**
+ * Retorna o total de despesas para um determinado mês/ano
+ * @param {number} mes 
+ * @param {number} ano 
+ * @returns {Promise<number>}
+ */
+getTotalDespesas: async (mes, ano) => {
+    try {
+      const despesas = await expenseService.getAllExpenses({ mes, ano });
+      return despesas.reduce((total, item) => total + (Number(item.valorPago) || 0), 0);
+    } catch (error) {
+      console.error('Erro ao calcular total de despesas:', error);
       throw error;
     }
   },

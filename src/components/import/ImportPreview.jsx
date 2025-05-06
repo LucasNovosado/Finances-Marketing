@@ -17,6 +17,7 @@ const ImportPreview = ({
   const [bulkCategory, setBulkCategory] = useState('');
   const [bulkOrcamento, setBulkOrcamento] = useState('');
   
+  
   // Listas pré-definidas de orçamentos e categorias
   const orcamentoOptions = [
     'Rede Única de Baterias', 
