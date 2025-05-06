@@ -35,6 +35,11 @@ const DashboardPage = () => {
   const navigateToImportExpenses = () => {
     navigate('/import-expenses');
   };
+  
+  // Função para navegar para a tela de gerenciamento de faturamento
+  const navigateToFaturamento = () => {
+    navigate('/faturamento');
+  };
 
   if (!user) {
     return <div className="loading">Carregando...</div>;
@@ -63,7 +68,7 @@ const DashboardPage = () => {
           <p>Você está logado com sucesso no sistema.</p>
         </div>
         
-        {/* Adicionando o componente de resumo de despesas */}
+        {/* Componente de resumo de despesas */}
         <DashboardSummary />
         
         <div className="dashboard-cards">
@@ -74,8 +79,8 @@ const DashboardPage = () => {
           </div>
           
           <div className="dashboard-card">
-            <h3>Relatórios de Despesas</h3>
-            <p>Utilize o sistema para gerenciar as despesas de marketing:</p>
+            <h3>Gerenciamento de Dados</h3>
+            <p>Utilize o sistema para gerenciar as despesas e faturamento:</p>
             <ul className="dashboard-actions-list">
               <li>
                 <button 
@@ -83,6 +88,14 @@ const DashboardPage = () => {
                   onClick={navigateToImportExpenses}
                 >
                   Importar planilha de despesas
+                </button>
+              </li>
+              <li>
+                <button 
+                  className="action-button" 
+                  onClick={navigateToFaturamento}
+                >
+                  Gerenciar faturamento mensal
                 </button>
               </li>
               <li>

@@ -1,7 +1,10 @@
+// src/routes/AppRoutes.jsx
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
+import FaturamentoPage from '../pages/FaturamentoPage';
 import ImportExpensePage from '../pages/ImportExpensePage';
 import { ImportExpenseProvider } from "../contexts/ImportExpenseContext.jsx";
 import authService from '../services/authService';
@@ -76,6 +79,16 @@ const AppRoutes = () => {
             <ImportExpenseProvider>
               <ImportExpensePage />
             </ImportExpenseProvider>
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Rota protegida - Gerenciamento de Faturamento */}
+      <Route 
+        path="/faturamento" 
+        element={
+          <ProtectedRoute>
+            <FaturamentoPage />
           </ProtectedRoute>
         } 
       />

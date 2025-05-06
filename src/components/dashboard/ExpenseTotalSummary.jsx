@@ -8,11 +8,11 @@ const ExpenseTotalSummary = ({ totalGeral, totalGeralFiltered, totalGeneralBudge
   return (
     <div className="expense-total-summary">
       <div className="expense-total-card">
-        <h3>Total Geral de Despesas</h3>
+        <h3>Total Geral de Despesas Rede Única</h3>
         <div className="expense-total-value">{formatCurrency(totalGeralFiltered)}</div>
         <div className="expense-total-note">
           <p>
-            Soma das despesas dos orçamentos: {totalGeneralBudgets.join(', ')}
+            Despesas Rede Única de Baterias: {totalGeneralBudgets.join(', ')}
           </p>
         </div>
       </div>

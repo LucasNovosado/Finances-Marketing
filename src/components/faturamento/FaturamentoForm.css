@@ -1,0 +1,64 @@
+/* src/components/faturamento/FaturamentoForm.css */
+
+.faturamento-form {
+    margin-top: 1.5rem;
+  }
+  
+  .supervisores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .faturamento-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    font-size: 1.1rem;
+    color: #666;
+  }
+  
+  .faturamento-error {
+    background-color: #ffe6e6;
+    color: #d32f2f;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #d32f2f;
+  }
+  
+  .faturamento-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+  
+  .save-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 1rem;
+    min-width: 200px;
+  }
+  
+  .save-button:hover:not(:disabled) {
+    background-color: #218838;
+  }
+  
+  .save-button:disabled {
+    background-color: #8fd19e;
+    cursor: not-allowed;
+  }
+  
+  @media (max-width: 768px) {
+    .supervisores-grid {
+      grid-template-columns: 1fr;
+    }
+  }

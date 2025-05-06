@@ -1,0 +1,145 @@
+/* src/pages/FaturamentoPage.css */
+
+.faturamento-page-container {
+    min-height: 100vh;
+    background-color: #f5f5f5;
+  }
+  
+  .faturamento-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .faturamento-page-header h1 {
+    margin: 0;
+    color: #333;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .back-button {
+    padding: 0.5rem 1rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .back-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .faturamento-page-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .faturamento-page-card {
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+  }
+  
+  .faturamento-page-card h2 {
+    margin-top: 0;
+    color: #4a90e2;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .faturamento-page-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
+  }
+  
+  .filter-controls {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
+  
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .filter-group label {
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  .filter-group select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 1rem;
+    min-width: 150px;
+    color: #495057;
+  }
+  
+  .filter-group select:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+  }
+  
+  .success-message {
+    padding: 1rem;
+    margin: 1rem 0;
+    background-color: #e6ffee;
+    color: #28a745;
+    border-radius: 4px;
+    border-left: 4px solid #28a745;
+  }
+  
+  @media (max-width: 768px) {
+    .faturamento-page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .header-actions {
+      width: 100%;
+    }
+    
+    .faturamento-page-content {
+      padding: 1rem;
+    }
+    
+    .filter-controls {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .filter-group {
+      width: 100%;
+    }
+    
+    .filter-group select {
+      flex: 1;
+    }
+  }

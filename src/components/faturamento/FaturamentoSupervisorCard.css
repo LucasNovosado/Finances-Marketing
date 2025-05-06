@@ -1,0 +1,85 @@
+/* src/components/faturamento/FaturamentoSupervisorCard.css */
+
+.faturamento-supervisor-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.2rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .faturamento-supervisor-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .supervisor-name {
+    font-weight: 600;
+    color: #4a90e2;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+  }
+  
+  .faturamento-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  
+  .input-group label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+  }
+  
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .currency-prefix {
+    position: absolute;
+    left: 0.75rem;
+    color: #666;
+    font-weight: 500;
+  }
+  
+  .faturamento-supervisor-card input {
+    width: 100%;
+    padding: 0.75rem;
+    padding-left: 2rem; /* Espaço para o prefixo R$ */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+  }
+  
+  .faturamento-supervisor-card input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+  }
+  
+  .faturamento-supervisor-card input::placeholder {
+    color: #aaa;
+  }
+  
+  .percentual-value {
+    margin-top: 0.3rem;
+    font-size: 0.85rem;
+    color: #28a745;
+    font-weight: 500;
+    background-color: rgba(40, 167, 69, 0.1);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    text-align: right;
+  }
