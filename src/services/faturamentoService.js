@@ -15,69 +15,86 @@ const faturamentoService = {
   getFaturamentoByMonthYear: async (mes, ano) => {
     try {
       const Faturamento = Parse.Object.extend('FaturamentoMensal');
-      const query = new Parse.Query(Faturamento);
       
-      query.equalTo('mes', mes);
-      query.equalTo('ano', ano);
+      // Query para buscar o registro COM sucata
+      const queryComSucata = new Parse.Query(Faturamento);
+      queryComSucata.equalTo('mes', mes);
+      queryComSucata.equalTo('ano', ano);
+      queryComSucata.equalTo('ComSucata', true);
       
-      const result = await query.first();
+      // Query para buscar o registro SEM sucata
+      const querySemSucata = new Parse.Query(Faturamento);
+      querySemSucata.equalTo('mes', mes);
+      querySemSucata.equalTo('ano', ano);
+      querySemSucata.equalTo('ComSucata', false);
       
-      if (result) {
-        // Retorna o objeto existente com base nos campos do banco de dados
-        return {
-          id: result.id,
-          mes: result.get('mes'),
-          ano: result.get('ano'),
-          faturamentoComSucata: {
-            Wellington: result.get('fatWellington'),
-            Alan: result.get('fatAlan'),
-            Reacao: result.get('fatReacao'),
-            Alexandre: result.get('fatAlexandre'),
-            Heitor: result.get('fatHeitor'),
-            Carlos: result.get('fatCarlos'),
-            Cassia: result.get('fatCassia')
-          },
-          faturamentoSemSucata: {
-            Wellington: result.get('fatWellington') && !result.get('ComSucata') ? result.get('fatWellington') : '',
-            Alan: result.get('fatAlan') && !result.get('ComSucata') ? result.get('fatAlan') : '',
-            Reacao: result.get('fatReacao') && !result.get('ComSucata') ? result.get('fatReacao') : '',
-            Alexandre: result.get('fatAlexandre') && !result.get('ComSucata') ? result.get('fatAlexandre') : '',
-            Heitor: result.get('fatHeitor') && !result.get('ComSucata') ? result.get('fatHeitor') : '',
-            Carlos: result.get('fatCarlos') && !result.get('ComSucata') ? result.get('fatCarlos') : '',
-            Cassia: result.get('fatCassia') && !result.get('ComSucata') ? result.get('fatCassia') : ''
-          },
-          totalComSucata: calculateTotal(result, true),
-          totalSemSucata: calculateTotal(result, false),
-          createdAt: result.get('createdAt'),
-          updatedAt: result.get('updatedAt')
+      // Executa as duas queries em paralelo
+      const [resultComSucata, resultSemSucata] = await Promise.all([
+        queryComSucata.first(),
+        querySemSucata.first()
+      ]);
+      
+      // Prepara o objeto de retorno
+      const returnObject = {
+        mes,
+        ano,
+        faturamentoComSucata: {
+          Wellington: '',
+          Alan: '',
+          Reacao: '',
+          Alexandre: '',
+          Heitor: '',
+          Carlos: '',
+          Cassia: ''
+        },
+        faturamentoSemSucata: {
+          Wellington: '',
+          Alan: '',
+          Reacao: '',
+          Alexandre: '',
+          Heitor: '',
+          Carlos: '',
+          Cassia: ''
+        },
+        totalComSucata: 0,
+        totalSemSucata: 0
+      };
+      
+      // Se existir um registro COM sucata, preenche os dados correspondentes
+      if (resultComSucata) {
+        returnObject.id = resultComSucata.id;
+        returnObject.faturamentoComSucata = {
+          Wellington: resultComSucata.get('fatWellington') || '',
+          Alan: resultComSucata.get('fatAlan') || '',
+          Reacao: resultComSucata.get('fatReacao') || '',
+          Alexandre: resultComSucata.get('fatAlexandre') || '',
+          Heitor: resultComSucata.get('fatHeitor') || '',
+          Carlos: resultComSucata.get('fatCarlos') || '',
+          Cassia: resultComSucata.get('fatCassia') || ''
         };
-      } else {
-        // Retorna um objeto vazio se não existir
-        return {
-          mes,
-          ano,
-          faturamentoComSucata: {
-            Wellington: '',
-            Alan: '',
-            Reacao: '',
-            Alexandre: '',
-            Heitor: '',
-            Carlos: '',
-            Cassia: ''
-          },
-          faturamentoSemSucata: {
-            Wellington: '',
-            Alan: '',
-            Reacao: '',
-            Alexandre: '',
-            Heitor: '',
-            Carlos: '',
-            Cassia: ''
-          },
-          totalComSucata: 0,
-          totalSemSucata: 0
-        };
+        returnObject.totalComSucata = calculateTotal(resultComSucata);
       }
+      
+      // Se existir um registro SEM sucata, preenche os dados correspondentes
+      if (resultSemSucata) {
+        // Se não tiver ID ainda, usa o do registro SEM sucata
+        if (!returnObject.id) {
+          returnObject.id = resultSemSucata.id;
+        }
+        
+        returnObject.faturamentoSemSucata = {
+          Wellington: resultSemSucata.get('fatWellington') || '',
+          Alan: resultSemSucata.get('fatAlan') || '',
+          Reacao: resultSemSucata.get('fatReacao') || '',
+          Alexandre: resultSemSucata.get('fatAlexandre') || '',
+          Heitor: resultSemSucata.get('fatHeitor') || '',
+          Carlos: resultSemSucata.get('fatCarlos') || '',
+          Cassia: resultSemSucata.get('fatCassia') || ''
+        };
+        returnObject.totalSemSucata = calculateTotal(resultSemSucata);
+      }
+      
+      return returnObject;
     } catch (error) {
       console.error('Erro ao buscar faturamento:', error);
       throw error;
@@ -92,51 +109,41 @@ const faturamentoService = {
   saveFaturamento: async (faturamentoData) => {
     try {
       const Faturamento = Parse.Object.extend('FaturamentoMensal');
-      let faturamento;
       
-      if (faturamentoData.id) {
-        // Atualiza um registro existente
-        const query = new Parse.Query(Faturamento);
-        faturamento = await query.get(faturamentoData.id);
-      } else {
-        // Cria um novo registro
-        faturamento = new Faturamento();
-      }
+      // Busca registros existentes para o mês/ano
+      const queryComSucata = new Parse.Query(Faturamento);
+      queryComSucata.equalTo('mes', faturamentoData.mes);
+      queryComSucata.equalTo('ano', faturamentoData.ano);
+      queryComSucata.equalTo('ComSucata', true);
       
-      // Define os campos para o registro COM sucata
-      faturamento.set('mes', faturamentoData.mes);
-      faturamento.set('ano', faturamentoData.ano);
-      faturamento.set('ComSucata', true);
-      faturamento.set('fatWellington', faturamentoData.faturamentoComSucata.Wellington || '');
-      faturamento.set('fatAlan', faturamentoData.faturamentoComSucata.Alan || '');
-      faturamento.set('fatReacao', faturamentoData.faturamentoComSucata.Reacao || '');
-      faturamento.set('fatAlexandre', faturamentoData.faturamentoComSucata.Alexandre || '');
-      faturamento.set('fatHeitor', faturamentoData.faturamentoComSucata.Heitor || '');
-      faturamento.set('fatCarlos', faturamentoData.faturamentoComSucata.Carlos || '');
-      faturamento.set('fatCassia', faturamentoData.faturamentoComSucata.Cassia || '');
-      faturamento.set('createdBy', Parse.User.current());
-      
-      // Salva o registro COM sucata
-      await faturamento.save();
-      
-      // Cria ou atualiza o registro SEM sucata
-      let faturamentoSemSucata;
-      
-      // Verifica se já existe um registro SEM sucata para o mesmo mês/ano
       const querySemSucata = new Parse.Query(Faturamento);
       querySemSucata.equalTo('mes', faturamentoData.mes);
       querySemSucata.equalTo('ano', faturamentoData.ano);
       querySemSucata.equalTo('ComSucata', false);
       
-      const existingSemSucata = await querySemSucata.first();
+      // Executa as queries em paralelo
+      const [existingComSucata, existingSemSucata] = await Promise.all([
+        queryComSucata.first(),
+        querySemSucata.first()
+      ]);
       
-      if (existingSemSucata) {
-        faturamentoSemSucata = existingSemSucata;
-      } else {
-        faturamentoSemSucata = new Faturamento();
-      }
+      // Prepara o objeto para salvar com sucata
+      let faturamentoComSucata = existingComSucata || new Faturamento();
       
-      // Define os campos para o registro SEM sucata
+      faturamentoComSucata.set('mes', faturamentoData.mes);
+      faturamentoComSucata.set('ano', faturamentoData.ano);
+      faturamentoComSucata.set('ComSucata', true);
+      faturamentoComSucata.set('fatWellington', faturamentoData.faturamentoComSucata.Wellington || '');
+      faturamentoComSucata.set('fatAlan', faturamentoData.faturamentoComSucata.Alan || '');
+      faturamentoComSucata.set('fatReacao', faturamentoData.faturamentoComSucata.Reacao || '');
+      faturamentoComSucata.set('fatAlexandre', faturamentoData.faturamentoComSucata.Alexandre || '');
+      faturamentoComSucata.set('fatHeitor', faturamentoData.faturamentoComSucata.Heitor || '');
+      faturamentoComSucata.set('fatCarlos', faturamentoData.faturamentoComSucata.Carlos || '');
+      faturamentoComSucata.set('fatCassia', faturamentoData.faturamentoComSucata.Cassia || '');
+      
+      // Prepara o objeto para salvar sem sucata
+      let faturamentoSemSucata = existingSemSucata || new Faturamento();
+      
       faturamentoSemSucata.set('mes', faturamentoData.mes);
       faturamentoSemSucata.set('ano', faturamentoData.ano);
       faturamentoSemSucata.set('ComSucata', false);
@@ -147,36 +154,22 @@ const faturamentoService = {
       faturamentoSemSucata.set('fatHeitor', faturamentoData.faturamentoSemSucata.Heitor || '');
       faturamentoSemSucata.set('fatCarlos', faturamentoData.faturamentoSemSucata.Carlos || '');
       faturamentoSemSucata.set('fatCassia', faturamentoData.faturamentoSemSucata.Cassia || '');
-      faturamentoSemSucata.set('createdBy', Parse.User.current());
       
-      // Salva o registro SEM sucata
-      await faturamentoSemSucata.save();
+      // Salva os dois objetos em paralelo
+      await Promise.all([
+        faturamentoComSucata.save(),
+        faturamentoSemSucata.save()
+      ]);
       
-      // Retorna o objeto atualizado
+      // Retorna os dados combinados
       return {
-        id: faturamento.id,
-        mes: faturamento.get('mes'),
-        ano: faturamento.get('ano'),
-        faturamentoComSucata: {
-          Wellington: faturamento.get('fatWellington') || '',
-          Alan: faturamento.get('fatAlan') || '',
-          Reacao: faturamento.get('fatReacao') || '',
-          Alexandre: faturamento.get('fatAlexandre') || '',
-          Heitor: faturamento.get('fatHeitor') || '',
-          Carlos: faturamento.get('fatCarlos') || '',
-          Cassia: faturamento.get('fatCassia') || ''
-        },
-        faturamentoSemSucata: {
-          Wellington: faturamentoSemSucata.get('fatWellington') || '',
-          Alan: faturamentoSemSucata.get('fatAlan') || '',
-          Reacao: faturamentoSemSucata.get('fatReacao') || '',
-          Alexandre: faturamentoSemSucata.get('fatAlexandre') || '',
-          Heitor: faturamentoSemSucata.get('fatHeitor') || '',
-          Carlos: faturamentoSemSucata.get('fatCarlos') || '',
-          Cassia: faturamentoSemSucata.get('fatCassia') || ''
-        },
-        totalComSucata: calculateTotal(faturamento, true),
-        totalSemSucata: calculateTotal(faturamentoSemSucata, false)
+        id: faturamentoComSucata.id,
+        mes: faturamentoData.mes,
+        ano: faturamentoData.ano,
+        faturamentoComSucata: faturamentoData.faturamentoComSucata,
+        faturamentoSemSucata: faturamentoData.faturamentoSemSucata,
+        totalComSucata: calculateTotalFromValues(faturamentoData.faturamentoComSucata),
+        totalSemSucata: calculateTotalFromValues(faturamentoData.faturamentoSemSucata)
       };
     } catch (error) {
       console.error('Erro ao salvar faturamento:', error);
@@ -186,16 +179,12 @@ const faturamentoService = {
 };
 
 /**
- * Função auxiliar para calcular o total do faturamento
+ * Função auxiliar para calcular o total do faturamento a partir de um objeto Parse
  * @param {Parse.Object} faturamento - Objeto de faturamento
- * @param {Boolean} comSucata - Indica se é COM sucata ou SEM sucata
  * @returns {Number} - Total calculado
  */
-function calculateTotal(faturamento, comSucata) {
+function calculateTotal(faturamento) {
   if (!faturamento) return 0;
-  
-  // Verifica se o objeto corresponde ao tipo desejado (COM/SEM sucata)
-  if (faturamento.get('ComSucata') !== comSucata) return 0;
   
   // Lista de supervisores
   const supervisores = [
@@ -211,6 +200,26 @@ function calculateTotal(faturamento, comSucata) {
   // Calcula o total
   return supervisores.reduce((total, supervisor) => {
     const valor = faturamento.get(supervisor);
+    if (!valor) return total;
+    
+    // Converte string para número
+    const numValue = typeof valor === 'string' 
+      ? parseFloat(valor.replace(/[^\d.,]/g, '').replace(',', '.'))
+      : parseFloat(valor);
+      
+    return total + (isNaN(numValue) ? 0 : numValue);
+  }, 0);
+}
+
+/**
+ * Função auxiliar para calcular o total do faturamento a partir de um objeto de valores
+ * @param {Object} valoresObj - Objeto com os valores de faturamento
+ * @returns {Number} - Total calculado
+ */
+function calculateTotalFromValues(valoresObj) {
+  if (!valoresObj) return 0;
+  
+  return Object.values(valoresObj).reduce((total, valor) => {
     if (!valor) return total;
     
     // Converte string para número
