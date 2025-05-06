@@ -4,114 +4,66 @@ import React, { useState, useEffect } from 'react';
 import './ImportMapping.css';
 
 const ImportMapping = ({ fileData, onMappingComplete, onBack }) => {
-  const [mapping, setMapping] = useState({
-    empresa: '',
-    fornecedor: '',
-    observacao: '',
-    valorPago: '',
-    orcamento: '',
-    categoria: '',
-    dataDespesa: ''
+  // Objeto para armazenar o mês e ano selecionados
+  const [dateInfo, setDateInfo] = useState({
+    mes: new Date().getMonth() + 1, // Mês atual por padrão
+    ano: new Date().getFullYear() // Ano atual por padrão
   });
   
-  const [availableFields, setAvailableFields] = useState([]);
   const [previewData, setPreviewData] = useState([]);
   const [error, setError] = useState('');
   
+  // Lista de meses para o dropdown
+  const meses = [
+    { value: 1, label: 'Janeiro' },
+    { value: 2, label: 'Fevereiro' },
+    { value: 3, label: 'Março' },
+    { value: 4, label: 'Abril' },
+    { value: 5, label: 'Maio' },
+    { value: 6, label: 'Junho' },
+    { value: 7, label: 'Julho' },
+    { value: 8, label: 'Agosto' },
+    { value: 9, label: 'Setembro' },
+    { value: 10, label: 'Outubro' },
+    { value: 11, label: 'Novembro' },
+    { value: 12, label: 'Dezembro' }
+  ];
+  
+  // Anos disponíveis (de 2020 até o ano atual + 1)
+  const anoAtual = new Date().getFullYear();
+  const anos = Array.from({length: anoAtual - 2019}, (_, i) => anoAtual - i);
+  
   useEffect(() => {
     if (fileData && fileData.length > 0) {
-      // Extrai todos os nomes de campos do primeiro item
-      const fields = Object.keys(fileData[0]);
-      setAvailableFields(fields);
-      
       // Define uma prévia dos dados (primeiros 3 itens)
       setPreviewData(fileData.slice(0, 3));
-      
-      // Tenta mapear automaticamente campos com nomes semelhantes
-      const autoMapping = {};
-      
-      const fieldMappingRules = {
-        empresa: ['empresa', 'company', 'nome empresa', 'razao social', 'fornecedor'],
-        fornecedor: ['fornecedor', 'vendor', 'nome fornecedor', 'prestador'],
-        observacao: ['observacao', 'descricao', 'description', 'obs', 'detalhes', 'details'],
-        valorPago: ['valor', 'valor pago', 'amount', 'price', 'custo', 'cost', 'preco'],
-        orcamento: ['orcamento', 'budget', 'departamento', 'department', 'centro custo'],
-        categoria: ['categoria', 'category', 'tipo', 'type', 'classificacao'],
-        dataDespesa: ['data', 'date', 'data despesa', 'expense date', 'data pagamento']
-      };
-      
-      Object.keys(fieldMappingRules).forEach(mapField => {
-        const possibleFields = fieldMappingRules[mapField];
-        
-        // Procura correspondências exatas ou parciais nos campos disponíveis
-        const matchedField = fields.find(field => {
-          const normalizedField = field.toLowerCase().trim();
-          return possibleFields.some(possibleField => 
-            normalizedField === possibleField || 
-            normalizedField.includes(possibleField)
-          );
-        });
-        
-        if (matchedField) {
-          autoMapping[mapField] = matchedField;
-        }
-      });
-      
-      setMapping(prevMapping => ({
-        ...prevMapping,
-        ...autoMapping
-      }));
     }
   }, [fileData]);
   
-  const handleMappingChange = (field, value) => {
-    setMapping(prevMapping => ({
-      ...prevMapping,
-      [field]: value
+  const handleDateChange = (field, value) => {
+    setDateInfo(prev => ({
+      ...prev,
+      [field]: parseInt(value)
     }));
   };
   
-  const validateMapping = () => {
-    // Campos obrigatórios
-    const requiredFields = ['empresa', 'valorPago', 'orcamento', 'categoria'];
-    
-    const missingFields = requiredFields.filter(field => !mapping[field]);
-    
-    if (missingFields.length > 0) {
-      setError(`Por favor, mapeie os campos obrigatórios: ${missingFields.join(', ')}`);
-      return false;
-    }
-    
-    // Verifica se há campos duplicados
-    const selectedValues = Object.values(mapping).filter(Boolean);
-    const uniqueValues = new Set(selectedValues);
-    
-    if (selectedValues.length !== uniqueValues.size) {
-      setError('Não é possível mapear o mesmo campo de origem para múltiplos campos do sistema.');
-      return false;
-    }
-    
-    setError('');
-    return true;
-  };
-  
   const handleContinue = () => {
-    if (!validateMapping()) {
+    if (!fileData || fileData.length === 0) {
+      setError('Não há dados para importar.');
       return;
     }
     
-    // Aplica o mapeamento aos dados
+    // Aplica o mapeamento automaticamente com os campos fixos:
+    // - COLUNA A: Empresa
+    // - COLUNA B: Fornecedor
+    // - COLUNA D: Observação
+    // - COLUNA M: Valor Pago
     const mappedData = fileData.map(item => {
-      const mappedItem = {};
-      
-      Object.keys(mapping).forEach(field => {
-        const sourceField = mapping[field];
-        if (sourceField) {
-          mappedItem[field] = item[sourceField];
-        }
-      });
-      
-      return mappedItem;
+      return {
+        ...item,
+        mes: dateInfo.mes,
+        ano: dateInfo.ano
+      };
     });
     
     onMappingComplete(mappedData);
@@ -123,142 +75,82 @@ const ImportMapping = ({ fileData, onMappingComplete, onBack }) => {
     }
   };
   
-  const renderMappingForm = () => {
-    const fieldDefinitions = [
-      { 
-        id: 'empresa', 
-        label: 'Empresa', 
-        description: 'Nome da empresa relacionada à despesa', 
-        required: true 
-      },
-      { 
-        id: 'fornecedor', 
-        label: 'Fornecedor', 
-        description: 'Nome do fornecedor do serviço ou produto', 
-        required: false 
-      },
-      { 
-        id: 'observacao', 
-        label: 'Observação', 
-        description: 'Descrição ou detalhes da despesa', 
-        required: false 
-      },
-      { 
-        id: 'valorPago', 
-        label: 'Valor Pago', 
-        description: 'Valor monetário da despesa', 
-        required: true 
-      },
-      { 
-        id: 'orcamento', 
-        label: 'Orçamento', 
-        description: 'Departamento ou centro de custo', 
-        required: true 
-      },
-      { 
-        id: 'categoria', 
-        label: 'Categoria', 
-        description: 'Tipo ou classificação da despesa', 
-        required: true 
-      },
-      { 
-        id: 'dataDespesa', 
-        label: 'Data da Despesa', 
-        description: 'Data em que a despesa foi realizada', 
-        required: false 
-      }
-    ];
-    
-    return (
-      <div className="mapping-form">
-        {fieldDefinitions.map(field => (
-          <div key={field.id} className="mapping-row">
-            <div>
-              <div className="field-name">
-                {field.label}
-                {field.required && <span className="field-required">*</span>}
-              </div>
-              <div className="field-description">{field.description}</div>
-            </div>
-            <div>
-              <select 
-                className="field-select"
-                value={mapping[field.id]}
-                onChange={(e) => handleMappingChange(field.id, e.target.value)}
-              >
-                <option value="">Selecione um campo...</option>
-                {availableFields.map((availableField, index) => (
-                  <option key={index} value={availableField}>
-                    {availableField}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-  
-  const renderPreview = () => {
-    // Filtra apenas os campos mapeados para exibição
-    const mappedFields = Object.entries(mapping)
-      .filter(([_, sourceField]) => sourceField)
-      .map(([targetField, sourceField]) => ({ 
-        targetField, 
-        sourceField 
-      }));
-    
-    if (mappedFields.length === 0) {
-      return null;
-    }
-    
-    return (
-      <div className="mapping-preview">
-        <h3>Prévia do Mapeamento</h3>
-        <div className="preview-table">
-          <table>
-            <thead>
-              <tr>
-                {mappedFields.map(({ targetField, sourceField }) => (
-                  <th key={targetField}>
-                    {targetField} ← {sourceField}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {previewData.map((item, rowIndex) => (
-                <tr key={rowIndex}>
-                  {mappedFields.map(({ targetField, sourceField }) => (
-                    <td key={`${rowIndex}-${targetField}`}>
-                      {item[sourceField]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-  
   return (
     <div className="mapping-container">
       <div className="mapping-instructions">
-        <h3>Mapeamento de Campos</h3>
+        <h3>Selecione o Mês e Ano das Despesas</h3>
         <p>
-          Associe os campos da sua planilha aos campos do sistema. 
-          Os campos marcados com * são obrigatórios.
+          Escolha o mês e ano a que se referem estas despesas. Os dados serão importados automaticamente para o sistema.
         </p>
       </div>
       
       {error && <div className="mapping-error">{error}</div>}
       
-      {renderMappingForm()}
+      <div className="date-selection">
+        <div className="date-selection-row">
+          <div className="field-name">
+            Mês <span className="field-required">*</span>
+          </div>
+          <div>
+            <select 
+              className="field-select"
+              value={dateInfo.mes}
+              onChange={(e) => handleDateChange('mes', e.target.value)}
+            >
+              {meses.map(mes => (
+                <option key={mes.value} value={mes.value}>
+                  {mes.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        
+        <div className="date-selection-row">
+          <div className="field-name">
+            Ano <span className="field-required">*</span>
+          </div>
+          <div>
+            <select 
+              className="field-select"
+              value={dateInfo.ano}
+              onChange={(e) => handleDateChange('ano', e.target.value)}
+            >
+              {anos.map(ano => (
+                <option key={ano} value={ano}>
+                  {ano}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
       
-      {renderPreview()}
+      <div className="file-preview">
+        <h3>Prévia dos Dados Detectados</h3>
+        {previewData.length > 0 && (
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Fornecedor</th>
+                <th>Observação</th>
+                <th>Valor Pago</th>
+              </tr>
+            </thead>
+            <tbody>
+              {previewData.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  <td>{row.empresa}</td>
+                  <td>{row.fornecedor}</td>
+                  <td>{row.observacao}</td>
+                  <td>{row.valorPago}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
       
       <div className="mapping-actions">
         <button className="back-button" onClick={handleBack}>

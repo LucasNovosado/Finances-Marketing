@@ -1,0 +1,302 @@
+/* src/components/import/ImportPreview.css */
+
+.preview-container {
+    padding: 1rem;
+  }
+  
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .preview-header h3 {
+    margin: 0;
+    color: #495057;
+  }
+  
+  .preview-stats {
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+  
+  .preview-table-container {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .preview-table th {
+    background-color: #f1f3f5;
+    padding: 0.75rem;
+    text-align: left;
+    border: 1px solid #dee2e6;
+    font-weight: 500;
+    color: #495057;
+    position: sticky;
+    top: 0;
+  }
+  
+  .preview-table td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+  }
+  
+  .preview-table tr:nth-child(even) {
+    background-color: #f8f9fa;
+  }
+  
+  .selection-column {
+    width: 40px;
+    text-align: center;
+  }
+  
+  .selected-row {
+    background-color: #e6f7ff !important;
+  }
+  
+  .preview-warning {
+    padding: 1rem;
+    margin: 1.5rem 0;
+    background-color: #fff3cd;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+  }
+  
+  .preview-warning h4 {
+    color: #856404;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .preview-warning p {
+    color: #6c757d;
+    margin-bottom: 0;
+  }
+  
+  .preview-notice {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+  }
+  
+  .preview-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+  }
+  
+  .preview-back-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .preview-back-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .preview-confirm-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .preview-confirm-button:hover:not(:disabled) {
+    background-color: #218838;
+  }
+  
+  .preview-confirm-button:disabled {
+    background-color: #8fd19e;
+    cursor: not-allowed;
+  }
+  
+  .column-value-monetary {
+    text-align: right;
+    font-family: monospace;
+  }
+  
+  .column-value-date {
+    font-family: monospace;
+  }
+  
+  .field-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    color: #495057;
+    background-color: #fff;
+    transition: border-color 0.3s;
+  }
+  
+  .field-select:focus {
+    border-color: #4a90e2;
+    outline: none;
+  }
+  
+  .bulk-edit-controls {
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .selected-count {
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  .enable-bulk-edit-button {
+    padding: 0.5rem 1rem;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+  }
+  
+  .enable-bulk-edit-button:hover {
+    background-color: #3a7bc8;
+  }
+  
+  .bulk-edit-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1rem;
+  }
+  
+  .bulk-edit-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    flex: 1;
+  }
+  
+  .bulk-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 220px;
+  }
+  
+  .bulk-field label {
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  .bulk-edit-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+  
+  .bulk-apply-button {
+    padding: 0.5rem 1rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+  }
+  
+  .bulk-apply-button:hover {
+    background-color: #218838;
+  }
+  
+  .bulk-cancel-button {
+    padding: 0.5rem 1rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+  }
+  
+  .bulk-cancel-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .mapping-error {
+    color: #dc3545;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background-color: #f8d7da;
+    border-radius: 4px;
+    border-left: 4px solid #dc3545;
+  }
+  
+  @media (max-width: 768px) {
+    .preview-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .preview-actions {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .preview-back-button, 
+    .preview-confirm-button {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .bulk-edit-controls {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .bulk-edit-fields {
+      flex-direction: column;
+    }
+    
+    .bulk-edit-actions {
+      margin-top: 1rem;
+      justify-content: space-between;
+      width: 100%;
+    }
+  }

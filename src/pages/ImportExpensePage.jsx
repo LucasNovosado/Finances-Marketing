@@ -19,6 +19,11 @@ const ImportExpensePage = () => {
   const [fileData, setFileData] = useState(null);
   const [mappedData, setMappedData] = useState(null);
   const [previewData, setPreviewData] = useState(null);
+  const [importStats, setImportStats] = useState({
+    totalItems: 0,
+    totalSaved: 0,
+    errors: 0
+  });
 
   const navigate = useNavigate();
 
@@ -49,24 +54,19 @@ const ImportExpensePage = () => {
     setCurrentStep(3);
   };
 
-  const handleConfirmImport = async () => {
+  const handleConfirmImport = async (finalData) => {
     try {
       setLoading(true);
       setError('');
       
-      // Implementa a lógica para salvar os dados no Parse
-      const fieldMapping = {
-        empresa: 'empresa',
-        fornecedor: 'fornecedor',
-        observacao: 'observacao',
-        valorPago: 'valorPago',
-        orcamento: 'orcamento',
-        categoria: 'categoria',
-        dataDespesa: 'dataDespesa'
-      };
-      
       // Utilizamos o serviço de importação para salvar os dados no Parse
-      const result = await saveExpensesToParse(mappedData, fieldMapping);
+      const result = await saveExpensesToParse(finalData || mappedData);
+      
+      setImportStats({
+        totalItems: finalData?.length || mappedData?.length || 0,
+        totalSaved: result.totalSaved || 0,
+        errors: (finalData?.length || mappedData?.length || 0) - (result.totalSaved || 0)
+      });
       
       setSuccess(`Importação realizada com sucesso! ${result.totalSaved} registros foram importados.`);
       setCurrentStep(4);
@@ -91,7 +91,11 @@ const ImportExpensePage = () => {
       case 1:
         return <FileUploader onFileUploaded={handleFileUploaded} />;
       case 2:
-        return <ImportMapping fileData={fileData} onMappingComplete={handleMappingComplete} />;
+        return <ImportMapping 
+                fileData={fileData} 
+                onMappingComplete={handleMappingComplete} 
+                onBack={() => setCurrentStep(1)} 
+              />;
       case 3:
         return <ImportPreview 
                  previewData={previewData} 
@@ -103,6 +107,7 @@ const ImportExpensePage = () => {
       case 4:
         return <ImportConfirmation 
                  success={success} 
+                 importStats={importStats}
                  onStartNew={resetImport} 
                  onBackToDashboard={handleNavigateBack} 
                />;

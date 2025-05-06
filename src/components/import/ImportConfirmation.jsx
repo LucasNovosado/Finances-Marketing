@@ -11,6 +11,17 @@ const ImportConfirmation = ({
 }) => {
   const { totalItems = 0, totalSaved = 0, errors = 0 } = importStats;
   
+  // Função para exibir o nome do mês
+  const getMesNome = (mesNumero) => {
+    const meses = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    
+    return meses[mesNumero - 1] || '';
+  };
+  
+  // Exibe as estatísticas da importação
   return (
     <div className="confirmation-container">
       <div className="confirmation-icon">✓</div>
@@ -34,10 +45,12 @@ const ImportConfirmation = ({
           <div className="stats-value">{totalSaved}</div>
         </div>
         
-        <div className="stats-row">
-          <div className="stats-label">Erros encontrados:</div>
-          <div className="stats-value">{errors}</div>
-        </div>
+        {errors > 0 && (
+          <div className="stats-row">
+            <div className="stats-label">Erros encontrados:</div>
+            <div className="stats-value">{errors}</div>
+          </div>
+        )}
       </div>
       
       <div className="confirmation-actions">

@@ -49,10 +49,13 @@ export const readExcelFile = (file) => {
               fornecedor: row['B'] || '',
               observacao: row['D'] || '',
               valorPago: row['M'] || '',
-              // Colunas adicionais para mapeamento posterior
-              orcamento: '', // Será preenchido no mapeamento manual
-              categoria: '', // Será preenchido no mapeamento manual
+              // O orçamento e categoria serão definidos durante a importação
+              orcamento: 'MARKETING', // Valor padrão
+              categoria: 'DESPESA GERAL' // Valor padrão
             };
+          }).filter(row => {
+            // Filtra linhas em branco ou sem dados relevantes
+            return row.empresa || row.fornecedor || row.valorPago;
           });
           
           resolve(formattedData);
@@ -77,45 +80,74 @@ export const readExcelFile = (file) => {
 /**
  * Salva os dados de despesas no Parse Server
  * @param {Array} expenses - Array de objetos representando despesas a serem salvas
- * @param {Object} fieldMapping - Mapeamento de campos do arquivo para campos do Parse
  * @returns {Promise<Object>} - Promise resolvida com informações sobre os dados salvos
  */
-export const saveExpensesToParse = async (expenses, fieldMapping) => {
+export const saveExpensesToParse = async (expenses) => {
   try {
-    const Despesa = Parse.Object.extend('Despesa');
-    const savePromises = [];
+    const Despesa = Parse.Object.extend('DespesasDetalhadas');
     
     const processedItems = expenses.map(expense => {
       const despesa = new Despesa();
       
-      // Mapeia os campos do arquivo para os campos do Parse
-      Object.keys(fieldMapping).forEach(parseField => {
-        const excelField = fieldMapping[parseField];
-        if (excelField && expense[excelField] !== undefined) {
-          // Tratamento especial para os tipos de dados
-          if (parseField === 'valorPago' && typeof expense[excelField] === 'string') {
-            // Converte string de valor para número
-            const numericValue = parseFloat(expense[excelField].replace(/[^\d.,]/g, '').replace(',', '.'));
-            despesa.set(parseField, isNaN(numericValue) ? 0 : numericValue);
-          } else if (parseField === 'dataDespesa' && expense[excelField]) {
-            // Trata campo de data
-            let dateValue;
-            if (expense[excelField] instanceof Date) {
-              dateValue = expense[excelField];
-            } else {
-              // Tenta converter string de data para objeto Date
-              dateValue = new Date(expense[excelField]);
-            }
-            
-            if (!isNaN(dateValue.getTime())) {
-              despesa.set(parseField, dateValue);
-            }
-          } else {
-            // Campo de texto normal
-            despesa.set(parseField, expense[excelField]);
-          }
+      // Define os campos básicos da despesa
+      despesa.set('empresa', expense.empresa);
+      despesa.set('fornecedor', expense.fornecedor);
+      despesa.set('observacao', expense.observacao);
+      
+      // Trata o valor pago, convertendo para número
+      if (expense.valorPago) {
+        let valorPago = expense.valorPago;
+        
+        // Se o valor for uma string, converte para número
+        if (typeof valorPago === 'string') {
+          // Remove caracteres não numéricos, exceto ponto e vírgula
+          valorPago = valorPago.replace(/[^\d.,]/g, '');
+          // Substitui vírgula por ponto para conversão numérica
+          valorPago = valorPago.replace(',', '.');
+          // Converte para número
+          valorPago = parseFloat(valorPago);
         }
-      });
+        
+        if (!isNaN(valorPago)) {
+          despesa.set('valorPago', valorPago);
+        } else {
+          despesa.set('valorPago', 0);
+        }
+      } else {
+        despesa.set('valorPago', 0);
+      }
+      
+      // Define o orçamento e a categoria padrão ou personalizada
+      despesa.set('orcamento', expense.orcamento || 'MARKETING');
+      despesa.set('categoria', expense.categoria || 'DESPESA GERAL');
+      
+      // Define o mês e ano
+      if (expense.mes) {
+        despesa.set('mes', expense.mes);
+      }
+      
+      if (expense.ano) {
+        despesa.set('ano', expense.ano);
+      }
+      
+      // Define a data da despesa se disponível
+      if (expense.dataDespesa) {
+        let dataDespesa;
+        if (expense.dataDespesa instanceof Date) {
+          dataDespesa = expense.dataDespesa;
+        } else {
+          // Tenta converter string para data
+          dataDespesa = new Date(expense.dataDespesa);
+        }
+        
+        if (!isNaN(dataDespesa.getTime())) {
+          despesa.set('dataDespesa', dataDespesa);
+        }
+      } else if (expense.mes && expense.ano) {
+        // Se não houver data específica, usa o primeiro dia do mês
+        const dataDespesa = new Date(expense.ano, expense.mes - 1, 1);
+        despesa.set('dataDespesa', dataDespesa);
+      }
       
       // Adiciona informações de auditoria
       despesa.set('createdBy', Parse.User.current());
@@ -128,55 +160,13 @@ export const saveExpensesToParse = async (expenses, fieldMapping) => {
     
     return {
       success: true,
+      totalItems: expenses.length,
       totalSaved: savedItems.length,
+      errors: expenses.length - savedItems.length,
       items: savedItems
     };
   } catch (error) {
     console.error('Erro ao salvar despesas:', error);
-    throw error;
-  }
-};
-
-/**
- * Obtém as categorias disponíveis no sistema
- * @returns {Promise<Array>} - Promise resolvida com array de categorias
- */
-export const fetchCategories = async () => {
-  try {
-    const Categoria = Parse.Object.extend('Categoria');
-    const query = new Parse.Query(Categoria);
-    query.ascending('nome');
-    
-    const categories = await query.find();
-    return categories.map(category => ({
-      id: category.id,
-      nome: category.get('nome'),
-      departamento: category.get('departamento')
-    }));
-  } catch (error) {
-    console.error('Erro ao buscar categorias:', error);
-    throw error;
-  }
-};
-
-/**
- * Obtém os departamentos disponíveis no sistema
- * @returns {Promise<Array>} - Promise resolvida com array de departamentos
- */
-export const fetchDepartments = async () => {
-  try {
-    const Departamento = Parse.Object.extend('Departamento');
-    const query = new Parse.Query(Departamento);
-    query.ascending('nome');
-    
-    const departments = await query.find();
-    return departments.map(department => ({
-      id: department.id,
-      nome: department.get('nome'),
-      percentual: department.get('percentual')
-    }));
-  } catch (error) {
-    console.error('Erro ao buscar departamentos:', error);
     throw error;
   }
 };
