@@ -119,9 +119,11 @@ const DashboardSummary = () => {
         <div className="dashboard-summary-error">{error}</div>
       ) : (
         <div className="dashboard-summary-content">
-          {/* Componente para o total geral de despesas */}
+          {/* Componente para o total geral de despesas (apenas orçamentos específicos) */}
           <ExpenseTotalSummary 
-            totalGeral={summary?.totalGeral || 0} 
+            totalGeral={summary?.totalGeral || 0}
+            totalGeralFiltered={summary?.totalGeralFiltered || 0}
+            totalGeneralBudgets={expenseService.totalGeneralBudgets}
             formatCurrency={formatCurrency} 
           />
           

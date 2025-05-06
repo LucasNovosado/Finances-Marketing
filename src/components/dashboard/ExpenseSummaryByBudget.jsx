@@ -11,6 +11,27 @@ const ExpenseSummaryByBudget = ({ summaryData, formatCurrency }) => {
   
   // Verifica se há mais itens para mostrar
   const hasMoreItems = summaryData.length > 5;
+
+  // Cores específicas para orçamentos especiais
+  const getCardStyle = (item) => {
+    if (item.color) {
+      return {
+        background: `linear-gradient(135deg, ${item.color}22, ${item.color}44)`,
+        borderLeft: `4px solid ${item.color}`,
+      };
+    }
+    return {};
+  };
+  
+  // Cor para a barra de percentual
+  const getBarStyle = (item) => {
+    if (item.color) {
+      return {
+        background: `linear-gradient(90deg, ${item.color}, ${item.color}aa)`,
+      };
+    }
+    return {};
+  };
   
   return (
     <div className="expense-summary-by-budget">
@@ -23,7 +44,11 @@ const ExpenseSummaryByBudget = ({ summaryData, formatCurrency }) => {
       ) : (
         <div className="budget-cards">
           {displayData.map((item, index) => (
-            <div key={index} className="budget-card">
+            <div 
+              key={index} 
+              className="budget-card"
+              style={getCardStyle(item)}
+            >
               <div className="budget-name">{item.orcamento}</div>
               <div className="budget-stats">
                 <div className="budget-value">{formatCurrency(item.total)}</div>
@@ -33,7 +58,10 @@ const ExpenseSummaryByBudget = ({ summaryData, formatCurrency }) => {
                 <div className="percentage-bar">
                   <div 
                     className="percentage-fill"
-                    style={{ width: `${Math.min(item.percentual, 100)}%` }}
+                    style={{
+                      width: `${Math.min(item.percentual, 100)}%`,
+                      ...(getBarStyle(item))
+                    }}
                   ></div>
                 </div>
                 <div className="percentage-value">{item.percentual.toFixed(1)}%</div>

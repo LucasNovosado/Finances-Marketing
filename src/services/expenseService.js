@@ -6,6 +6,25 @@ import Parse from 'parse/dist/parse.min.js';
  * Serviço para gerenciar operações relacionadas a despesas
  */
 const expenseService = {
+  // Lista de orçamentos para o total geral
+  totalGeneralBudgets: [
+    'Rede Única de Baterias', 
+    'Alan', 
+    'Alexandre', 
+    'Wellington', 
+    'Heitor', 
+    'Reação', 
+    'Cassia', 
+    'Carlos'
+  ],
+
+  // Lista de orçamentos com cores personalizadas
+  specialBudgets: {
+    'João de Barro': '#e74c3c', // Vermelho
+    'Imobiliária': '#3498db',   // Azul
+    'Baterias Bats': '#2ecc71'  // Verde
+  },
+  
   /**
    * Busca todas as despesas do sistema
    * @param {Object} options - Opções de consulta
@@ -94,26 +113,38 @@ const expenseService = {
         return acc;
       }, {});
       
-      // Calcula o total geral
+      // Calcula o total geral apenas para os orçamentos específicos
+      const totalGeralFiltered = Object.entries(summaryByBudget)
+        .filter(([orcamento]) => expenseService.totalGeneralBudgets.includes(orcamento))
+        .reduce((total, [_, data]) => total + data.total, 0);
+      
+      // Calcula o total de todos os orçamentos (para referência)
       const totalGeral = Object.values(summaryByBudget).reduce(
-        (total, { total: value }) => total + value, 
-        0
+        (total, { total: value }) => total + value, 0
       );
       
-      // Formata o resumo para incluir percentuais
-      const formattedSummary = Object.entries(summaryByBudget).map(([orcamento, data]) => ({
-        orcamento,
-        total: data.total,
-        count: data.count,
-        percentual: totalGeral > 0 ? (data.total / totalGeral) * 100 : 0
-      }));
+      // Formata o resumo para incluir percentuais e cores personalizadas
+      const formattedSummary = Object.entries(summaryByBudget).map(([orcamento, data]) => {
+        // Verifica se é um dos orçamentos especiais para atribuir uma cor personalizada
+        const color = expenseService.specialBudgets[orcamento] || null;
+        
+        return {
+          orcamento,
+          total: data.total,
+          count: data.count,
+          percentual: totalGeral > 0 ? (data.total / totalGeral) * 100 : 0,
+          color: color
+        };
+      });
       
       // Ordena por valor total (maior para menor)
       formattedSummary.sort((a, b) => b.total - a.total);
       
       return {
         byBudget: formattedSummary,
-        totalGeral
+        totalGeral,
+        totalGeralFiltered,
+        totalGeneralBudgets: expenseService.totalGeneralBudgets
       };
     } catch (error) {
       console.error('Erro ao gerar resumo de despesas:', error);

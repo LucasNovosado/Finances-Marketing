@@ -1,8 +1,9 @@
-// src/pages/DashboardPage.jsx (Atualizado com navegação para importação)
+// src/pages/DashboardPage.jsx
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
+import DashboardSummary from '../components/dashboard/DashboardSummary';
 import './DashboardPage.css';
 
 const DashboardPage = () => {
@@ -61,6 +62,9 @@ const DashboardPage = () => {
           <h2>Bem-vindo, {user.get('username')}!</h2>
           <p>Você está logado com sucesso no sistema.</p>
         </div>
+        
+        {/* Adicionando o componente de resumo de despesas */}
+        <DashboardSummary />
         
         <div className="dashboard-cards">
           <div className="dashboard-card">

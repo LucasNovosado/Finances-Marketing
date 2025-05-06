@@ -1,0 +1,58 @@
+/* src/components/dashboard/ExpenseTotalSummary.css */
+
+.expense-total-summary {
+  width: 100%;
+}
+
+.expense-total-card {
+  background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+  color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.expense-total-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.expense-total-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.expense-total-note {
+  font-size: 0.85rem;
+  margin-top: 1rem;
+  opacity: 0.9;
+  text-align: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.expense-total-note p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .expense-total-card {
+    padding: 1.2rem;
+  }
+  
+  .expense-total-value {
+    font-size: 2rem;
+  }
+  
+  .expense-total-note {
+    font-size: 0.75rem;
+  }
+}
