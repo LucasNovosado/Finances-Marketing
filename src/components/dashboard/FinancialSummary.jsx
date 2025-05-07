@@ -19,7 +19,7 @@ const FinancialSummary = ({ filters }) => {
     totalDespesasOriginal: 0,
     faturamentoCheio: 0,
     faturamentoSemSucata: 0,
-    limitePercentual: 1,
+    limitePercentual: 1, // Agora definido como 1%
   });
   
   // Dados financeiros calculados com base nos orçamentos selecionados
@@ -30,6 +30,9 @@ const FinancialSummary = ({ filters }) => {
     valorLimite: 0,
     percentualUtilizado: 0,
   });
+
+  // Valor ideal para percentual de faturamento (1%)
+  const valorIdeal = 1;
 
   useEffect(() => {
     const fetchFinancialData = async () => {
@@ -47,8 +50,10 @@ const FinancialSummary = ({ filters }) => {
         const fatDetalhado = await faturamentoService.getFaturamentoByMonthYear(filters.mes, filters.ano);
         const fatCheio = fatDetalhado.totalComSucata;
         const fatSucata = fatDetalhado.totalSemSucata;
-        const limite = await faturamentoService.getLimitesDespesa(filters.mes, filters.ano) || { percentualFatCheio: 1 };
-
+        
+        // Definir limite como 1% em vez de obter do serviço
+        const limitePercentual = 1;
+        
         // Agrupar despesas por orçamento
         const budgetGroups = {};
         allExpenses.forEach(expense => {
@@ -82,13 +87,13 @@ const FinancialSummary = ({ filters }) => {
           totalDespesasOriginal: totalDespesas,
           faturamentoCheio: fatCheio,
           faturamentoSemSucata: fatSucata,
-          limitePercentual: limite.percentualFatCheio,
+          limitePercentual: limitePercentual, // Usar 1% em vez do valor do banco
         });
         
         // Cálculos iniciais (com todos os orçamentos incluídos)
         const percentualComSucata = fatCheio > 0 ? (totalDespesas / fatCheio * 100) : 0;
         const percentualSemSucata = fatSucata > 0 ? (totalDespesas / fatSucata * 100) : 0;
-        const valorLimiteCom = fatCheio * limite.percentualFatCheio / 100;
+        const valorLimiteCom = fatCheio * limitePercentual / 100;
         const percentualUtilizadoComSucata = valorLimiteCom > 0 ? (totalDespesas / valorLimiteCom * 100) : 0;
         
         setCalculatedData({
@@ -171,6 +176,11 @@ const FinancialSummary = ({ filters }) => {
     return 'status-danger';
   };
 
+  // Determinar a cor do percentual com base no valor ideal
+  const getPercentColor = (percentual) => {
+    return percentual <= valorIdeal ? 'status-safe' : '';
+  };
+
   // Formatar valores numéricos
   const formatCurrency = (value) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -195,14 +205,14 @@ const FinancialSummary = ({ filters }) => {
           <div className="metric-group">
             <div className="metric">
               <div className="metric-label">% do Faturamento COM Sucata</div>
-              <div className={`metric-value ${getStatusColor()}`}>
+              <div className={`metric-value ${getPercentColor(calculatedData.percentualComSucata)}`}>
                 {formatPercent(calculatedData.percentualComSucata)}
               </div>
             </div>
 
             <div className="metric">
               <div className="metric-label">% do Faturamento SEM Sucata</div>
-              <div className="metric-value">
+              <div className={`metric-value ${getPercentColor(calculatedData.percentualSemSucata)}`}>
                 {formatPercent(calculatedData.percentualSemSucata)}
               </div>
             </div>
@@ -266,17 +276,21 @@ const FinancialSummary = ({ filters }) => {
                 <div className="popup-detail-group">
                   <div className="popup-detail">
                     <div className="popup-detail-label">Percentual do Faturamento COM Sucata</div>
-                    <div className="popup-detail-value">{formatPercent(calculatedData.percentualComSucata)}</div>
+                    <div className={`popup-detail-value ${getPercentColor(calculatedData.percentualComSucata)}`}>
+                      {formatPercent(calculatedData.percentualComSucata)}
+                    </div>
                   </div>
                   <div className="popup-detail">
                     <div className="popup-detail-label">Percentual do Faturamento SEM Sucata</div>
-                    <div className="popup-detail-value">{formatPercent(calculatedData.percentualSemSucata)}</div>
+                    <div className={`popup-detail-value ${getPercentColor(calculatedData.percentualSemSucata)}`}>
+                      {formatPercent(calculatedData.percentualSemSucata)}
+                    </div>
                   </div>
                 </div>
 
                 <div className="popup-detail-group">
                   <div className="popup-detail">
-                    <div className="popup-detail-label">Limite Máximo ({rawFinancialData.limitePercentual}%)</div>
+                    <div className="popup-detail-label">Limite Máximo (1%)</div>
                     <div className="popup-detail-value">{formatCurrency(calculatedData.valorLimite)}</div>
                   </div>
                   <div className="popup-detail">
