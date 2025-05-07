@@ -18,6 +18,7 @@ const ImportPreview = ({
   const [bulkOrcamento, setBulkOrcamento] = useState('');
   const [editMode, setEditMode] = useState(null); // ID do item sendo editado ou null
   const [editObservacao, setEditObservacao] = useState('');
+  const [totalValor, setTotalValor] = useState(0); // Estado para armazenar o valor total
   
   // Listas pré-definidas de orçamentos e categorias
   const orcamentoOptions = [
@@ -31,38 +32,65 @@ const ImportPreview = ({
     'Heitor', 
     'Reação', 
     'Cassia', 
-    'Carlos'
+    'Carlos',
+    'Marketplace'
   ];
   
   const categoriaOptions = [
-    'PANFLETO / PANFLETAGEM / CARDÁPIO',
+    'MATERIAIS GRÁFICOS',
     'EVENTO',
     'FRANK',
     'BRINDE (cheirinho, lixinho, tapetes e balas)',
     'RÁDIO',
     'MARKETING DIGITAL',
-    'MANUTENÇÃO'
+    'MANUTENÇÃO',
+    'MURO',
+    'MANUTENÇÃO/LIMPEZA'
   ];
   
   useEffect(() => {
     if (previewData && previewData.length > 0) {
-      // Garante que estamos preservando os valores exatos como vieram
-      const preservedData = previewData.map((item, index) => {
-        // Extrair o valor numérico para cálculos internos
-        const valorNumerico = extrairValorNumerico(item.valorPago);
+      try {
+        // Garante que estamos preservando os valores exatos como vieram
+        const preservedData = previewData.map((item, index) => {
+          return {
+            ...item,
+            id: index, // Adiciona um ID único para cada linha
+            selected: false, // Adiciona um estado de seleção para cada linha
+            _original_valorPago: item.valorPago // Preserva o valor original para exibição
+          };
+        });
         
-        return {
-          ...item,
-          id: index, // Adiciona um ID único para cada linha
-          selected: false, // Adiciona um estado de seleção para cada linha
-          _original_valorPago: item.valorPago, // Preserva o valor original para exibição
-          _valor_numerico: valorNumerico // Valor numérico para cálculos
-        };
-      });
-      setData(preservedData);
-      console.log("Dados preservados na importação:", preservedData);
+        setData(preservedData);
+        
+        // Calcula o total dos valores importados
+        calcularTotal(preservedData);
+      } catch (error) {
+        console.error("Erro ao processar dados:", error);
+      }
     }
   }, [previewData]);
+  
+  // Função para calcular o total dos valores monetários
+  const calcularTotal = (items) => {
+    try {
+      // Inicia o valor total em 0
+      let total = 0;
+      
+      // Itera por cada item e soma o valor monetário
+      items.forEach((item, index) => {
+        // Usa o valor original para cálculo
+        const valorItem = extrairValorNumerico(item._original_valorPago || item.valorPago);
+        total += valorItem;
+      });
+      
+      // Atualiza o estado com o total calculado
+      setTotalValor(total);
+    } catch (error) {
+      console.error("Erro ao calcular o total:", error);
+      setTotalValor(0); // Define como 0 em caso de erro
+    }
+  };
   
   // Função para extrair o valor numérico de uma string de valor monetário
   const extrairValorNumerico = (valor) => {
@@ -73,18 +101,18 @@ const ImportPreview = ({
     
     // Se for string, faz o processamento
     if (typeof valor === 'string') {
-      // Remove caracteres não numéricos, exceto pontos e vírgulas
+      // Remove todos os caracteres que não são dígitos, ponto ou vírgula
       let valorLimpo = valor.replace(/[^\d.,]/g, '');
       
       // Se não houver números, retorna 0
       if (valorLimpo === '' || valorLimpo === '.' || valorLimpo === ',') return 0;
       
-      // Trata casos específicos de formatação brasileira (1.234,56)
+      // Formato brasileiro com ponto como separador de milhar e vírgula como decimal
       if (valorLimpo.includes('.') && valorLimpo.includes(',')) {
-        // Se tem ambos, o ponto é separador de milhares e a vírgula é decimal
         valorLimpo = valorLimpo.replace(/\./g, '').replace(',', '.');
-      } else {
-        // Se tem apenas vírgula, assume que é decimal
+      } 
+      // Apenas com vírgula (como decimal)
+      else if (valorLimpo.includes(',')) {
         valorLimpo = valorLimpo.replace(',', '.');
       }
       
@@ -187,12 +215,14 @@ const ImportPreview = ({
   };
   
   const handleRowSelection = (id) => {
-    setData(prevData => prevData.map(item => {
+    const newData = data.map(item => {
       if (item.id === id) {
         return { ...item, selected: !item.selected };
       }
       return item;
-    }));
+    });
+    
+    setData(newData);
     
     setSelectedRows(prevSelected => {
       if (prevSelected.includes(id)) {
@@ -221,7 +251,7 @@ const ImportPreview = ({
   const handleBulkEdit = () => {
     if (selectedRows.length === 0) return;
     
-    setData(prevData => prevData.map(item => {
+    const newData = data.map(item => {
       if (item.selected) {
         return {
           ...item,
@@ -230,8 +260,9 @@ const ImportPreview = ({
         };
       }
       return item;
-    }));
+    });
     
+    setData(newData);
     setBulkCategory('');
     setBulkOrcamento('');
     setBulkEditMode(false);
@@ -245,8 +276,6 @@ const ImportPreview = ({
       return item;
     }));
   };
-
-  // Função calcularTotal removida conforme solicitado
 
   // Nova função para iniciar edição de observação
   const startEditObservacao = (id, observacao) => {
@@ -272,11 +301,21 @@ const ImportPreview = ({
   // Nova função para excluir um lançamento
   const handleDeleteRow = (id) => {
     if (window.confirm('Tem certeza que deseja excluir este lançamento?')) {
-      setData(prevData => prevData.filter(item => item.id !== id));
+      const newData = data.filter(item => item.id !== id);
+      setData(newData);
+      
+      // Recalcula o total após a exclusão
+      calcularTotal(newData);
       
       // Também remove da lista de selecionados, se estiver
       setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== id));
     }
+  };
+  
+  // Função para formatar o valor monetário para exibição
+  const formatarValorTotal = (valor) => {
+    // Formata o valor como moeda brasileira (R$ 0.000,00)
+    return `R$ ${valor.toFixed(2).replace('.', ',')}`;
   };
   
   return (
@@ -392,8 +431,6 @@ const ImportPreview = ({
             </tr>
           </thead>
           <tbody>
-            {/* Linha de total removida conforme solicitado */}
-            
             {/* Linhas de dados */}
             {data.map((item) => (
               <tr key={item.id} className={item.selected ? 'selected-row' : ''}>
@@ -475,6 +512,13 @@ const ImportPreview = ({
                 </td>
               </tr>
             ))}
+            
+            {/* Linha de Total */}
+            <tr className="total-row">
+              <td colSpan="4" className="total-label">TOTAL:</td>
+              <td className="column-value-monetary total-value">{formatarValorTotal(totalValor)}</td>
+              <td colSpan="3"></td>
+            </tr>
           </tbody>
         </table>
       </div>

@@ -55,16 +55,7 @@ const ExpenseSummaryByBudget = ({ summaryData, formatCurrency }) => {
                 <div className="budget-count">{item.count} {item.count === 1 ? 'despesa' : 'despesas'}</div>
               </div>
               <div className="budget-percentage">
-                <div className="percentage-bar">
-                  <div 
-                    className="percentage-fill"
-                    style={{
-                      width: `${Math.min(item.percentual, 100)}%`,
-                      ...(getBarStyle(item))
-                    }}
-                  ></div>
-                </div>
-                <div className="percentage-value">{item.percentual.toFixed(1)}%</div>
+                
               </div>
             </div>
           ))}
