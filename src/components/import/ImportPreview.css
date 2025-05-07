@@ -1,4 +1,115 @@
 /* src/components/import/ImportPreview.css */
+/* Adicionar ao arquivo ImportPreview.css */
+/* Adicionar ao arquivo ImportPreview.css */
+
+.total-row {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    border-top: 2px solid #dee2e6;
+  }
+  
+  .total-label {
+    text-align: right;
+    padding-right: 15px;
+    color: #495057;
+  }
+  
+  .total-value {
+    font-size: 1.1rem;
+    color: #28a745;
+  }
+  
+.actions-column {
+    width: 80px;
+    text-align: center;
+  }
+  
+  .delete-row-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #dc3545;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .delete-row-button:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+  }
+  
+  .observacao-text {
+    position: relative;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    min-height: 28px;
+  }
+  
+  .observacao-text:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .edit-icon {
+    visibility: hidden;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    font-size: 12px;
+    color: #6c757d;
+  }
+  
+  .observacao-text:hover .edit-icon {
+    visibility: visible;
+  }
+  
+  .edit-observacao-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .edit-observacao-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    resize: vertical;
+  }
+  
+  .edit-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .save-edit-button, 
+  .cancel-edit-button {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .save-edit-button {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .save-edit-button:hover {
+    background-color: #218838;
+  }
+  
+  .cancel-edit-button {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .cancel-edit-button:hover {
+    background-color: #5a6268;
+  }
 
 .preview-container {
     padding: 1rem;

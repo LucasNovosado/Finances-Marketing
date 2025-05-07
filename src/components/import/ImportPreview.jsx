@@ -16,7 +16,8 @@ const ImportPreview = ({
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [bulkCategory, setBulkCategory] = useState('');
   const [bulkOrcamento, setBulkOrcamento] = useState('');
-  
+  const [editMode, setEditMode] = useState(null); // ID do item sendo editado ou null
+  const [editObservacao, setEditObservacao] = useState('');
   
   // Listas pré-definidas de orçamentos e categorias
   const orcamentoOptions = [
@@ -45,23 +46,74 @@ const ImportPreview = ({
   
   useEffect(() => {
     if (previewData && previewData.length > 0) {
-      setData(previewData.map((item, index) => ({
-        ...item,
-        id: index, // Adiciona um ID único para cada linha
-        selected: false // Adiciona um estado de seleção para cada linha
-      })));
+      // Garante que estamos preservando os valores exatos como vieram
+      const preservedData = previewData.map((item, index) => {
+        // Extrair o valor numérico para cálculos internos
+        const valorNumerico = extrairValorNumerico(item.valorPago);
+        
+        return {
+          ...item,
+          id: index, // Adiciona um ID único para cada linha
+          selected: false, // Adiciona um estado de seleção para cada linha
+          _original_valorPago: item.valorPago, // Preserva o valor original para exibição
+          _valor_numerico: valorNumerico // Valor numérico para cálculos
+        };
+      });
+      setData(preservedData);
+      console.log("Dados preservados na importação:", preservedData);
     }
   }, [previewData]);
   
+  // Função para extrair o valor numérico de uma string de valor monetário
+  const extrairValorNumerico = (valor) => {
+    if (valor === null || valor === undefined) return 0;
+    
+    // Se já for um número, apenas retorna
+    if (typeof valor === 'number') return valor;
+    
+    // Se for string, faz o processamento
+    if (typeof valor === 'string') {
+      // Remove caracteres não numéricos, exceto pontos e vírgulas
+      let valorLimpo = valor.replace(/[^\d.,]/g, '');
+      
+      // Se não houver números, retorna 0
+      if (valorLimpo === '' || valorLimpo === '.' || valorLimpo === ',') return 0;
+      
+      // Trata casos específicos de formatação brasileira (1.234,56)
+      if (valorLimpo.includes('.') && valorLimpo.includes(',')) {
+        // Se tem ambos, o ponto é separador de milhares e a vírgula é decimal
+        valorLimpo = valorLimpo.replace(/\./g, '').replace(',', '.');
+      } else {
+        // Se tem apenas vírgula, assume que é decimal
+        valorLimpo = valorLimpo.replace(',', '.');
+      }
+      
+      const numero = parseFloat(valorLimpo);
+      return isNaN(numero) ? 0 : numero;
+    }
+    
+    return 0;
+  };
+  
   const formatValue = (field, value) => {
     if (field === 'valorPago') {
-      // Formata valores monetários
-      const numValue = parseFloat(value);
-      if (!isNaN(numValue)) {
-        return `R$ ${numValue.toFixed(2).replace('.', ',')}`;
+      // Se for um número, formata para exibição
+      if (typeof value === 'number') {
+        return `R$ ${value.toFixed(2).replace('.', ',')}`;
       }
+      
+      // Se já for uma string formatada (e tiver R$), simplesmente retorne-a
+      if (typeof value === 'string' && value.includes('R$')) {
+        return value;
+      }
+      
+      // Tenta converter para número
+      const numValue = extrairValorNumerico(value);
+      
+      // Formata como valor monetário
+      return `R$ ${numValue.toFixed(2).replace('.', ',')}`;
     } else if (field === 'dataDespesa' && value) {
-      // Formata datas
+      // Código para formatação de datas
       const date = new Date(value);
       if (!isNaN(date.getTime())) {
         return date.toLocaleDateString('pt-BR');
@@ -71,6 +123,7 @@ const ImportPreview = ({
     // Retorna o valor original se não for necessário formatar
     return value;
   };
+  
   
   const getFieldClass = (field, value) => {
     if (field === 'valorPago') {
@@ -96,12 +149,8 @@ const ImportPreview = ({
       if (!item.valorPago && item.valorPago !== 0) {
         rowErrors.push('Valor Pago');
       } else {
-        // Valida se o valor pago é um número válido
-        const numValue = typeof item.valorPago === 'string' 
-          ? parseFloat(item.valorPago.replace(/[^\d.,]/g, '').replace(',', '.'))
-          : item.valorPago;
-          
-        if (isNaN(numValue)) {
+        // Validação já realizada na conversão
+        if (item._valor_numerico === 0 && item.valorPago && item.valorPago !== "0") {
           rowErrors.push('Valor Pago (formato inválido)');
         }
       }
@@ -126,7 +175,13 @@ const ImportPreview = ({
   const handleImportConfirm = () => {
     if (validateData()) {
       // Remove as propriedades auxiliares antes de enviar os dados
-      const cleanData = data.map(({ id, selected, ...item }) => item);
+      const cleanData = data.map(({ id, selected, _original_valorPago, _valor_numerico, ...item }) => {
+        // Use o valor original se disponível
+        return {
+          ...item,
+          valorPago: _original_valorPago || item.valorPago
+        };
+      });
       onConfirm(cleanData);
     }
   };
@@ -189,6 +244,39 @@ const ImportPreview = ({
       }
       return item;
     }));
+  };
+
+  // Função calcularTotal removida conforme solicitado
+
+  // Nova função para iniciar edição de observação
+  const startEditObservacao = (id, observacao) => {
+    setEditMode(id);
+    setEditObservacao(observacao || '');
+  };
+
+  // Nova função para salvar edição de observação
+  const saveEditObservacao = () => {
+    if (editMode !== null) {
+      handleSingleEdit(editMode, 'observacao', editObservacao);
+      setEditMode(null);
+      setEditObservacao('');
+    }
+  };
+
+  // Nova função para cancelar edição de observação
+  const cancelEditObservacao = () => {
+    setEditMode(null);
+    setEditObservacao('');
+  };
+
+  // Nova função para excluir um lançamento
+  const handleDeleteRow = (id) => {
+    if (window.confirm('Tem certeza que deseja excluir este lançamento?')) {
+      setData(prevData => prevData.filter(item => item.id !== id));
+      
+      // Também remove da lista de selecionados, se estiver
+      setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== id));
+    }
   };
   
   return (
@@ -300,11 +388,13 @@ const ImportPreview = ({
               <th>Valor Pago</th>
               <th>Orçamento</th>
               <th>Categoria</th>
-              <th>Mês</th>
-              <th>Ano</th>
+              <th className="actions-column">Ações</th>
             </tr>
           </thead>
           <tbody>
+            {/* Linha de total removida conforme solicitado */}
+            
+            {/* Linhas de dados */}
             {data.map((item) => (
               <tr key={item.id} className={item.selected ? 'selected-row' : ''}>
                 <td className="selection-column">
@@ -316,8 +406,40 @@ const ImportPreview = ({
                 </td>
                 <td>{item.empresa}</td>
                 <td>{item.fornecedor}</td>
-                <td>{item.observacao}</td>
-                <td className="column-value-monetary">{formatValue('valorPago', item.valorPago)}</td>
+                <td>
+                  {editMode === item.id ? (
+                    <div className="edit-observacao-container">
+                      <textarea
+                        value={editObservacao}
+                        onChange={(e) => setEditObservacao(e.target.value)}
+                        className="edit-observacao-textarea"
+                      />
+                      <div className="edit-actions">
+                        <button 
+                          className="save-edit-button" 
+                          onClick={saveEditObservacao}
+                        >
+                          Salvar
+                        </button>
+                        <button 
+                          className="cancel-edit-button" 
+                          onClick={cancelEditObservacao}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="observacao-text" onClick={() => startEditObservacao(item.id, item.observacao)}>
+                      {item.observacao}
+                      <span className="edit-icon">✎</span>
+                    </div>
+                  )}
+                </td>
+                <td className="column-value-monetary">
+                  {/* Exibe o valor original exatamente como veio da importação */}
+                  {item._original_valorPago || item.valorPago}
+                </td>
                 <td>
                   <select
                     value={item.orcamento || ''}
@@ -342,8 +464,15 @@ const ImportPreview = ({
                     ))}
                   </select>
                 </td>
-                <td>{item.mes}</td>
-                <td>{item.ano}</td>
+                <td className="actions-column">
+                  <button 
+                    className="delete-row-button" 
+                    onClick={() => handleDeleteRow(item.id)}
+                    title="Excluir lançamento"
+                  >
+                    🗑️
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -351,7 +480,7 @@ const ImportPreview = ({
       </div>
       
       <div className="preview-notice">
-        Nota: Esta é apenas uma amostra dos primeiros registros. A importação será feita para todos os {totalRecords} registros.
+        Visualizando todos os {totalRecords} registros para importação.
       </div>
       
       <div className="preview-actions">

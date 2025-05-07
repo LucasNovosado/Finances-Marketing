@@ -9,46 +9,57 @@ import Parse from 'parse/dist/parse.min.js';
  * @param {File} file - Objeto File contendo o arquivo Excel/CSV
  * @returns {Promise<Array>} - Promise resolvida com array de objetos representando as linhas do arquivo
  */
+// Modificação para o arquivo src/services/importService.js
+
 export const readExcelFile = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const data = e.target.result;
-        const workbook = XLSX.read(data, {
-          type: 'array',
-          cellDates: true,
-          dateNF: 'yyyy-mm-dd',
-        });
-        
-        // Pega a primeira planilha
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        // Converte para JSON com cabeçalhos automáticos (A, B, C, etc.)
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-          raw: false,
-          defval: '',
-          header: 'A',
-        });
-        
-        // Verifica se temos dados suficientes (pelo menos 7 linhas, já que os dados começam na linha 7)
-        if (jsonData.length >= 7) {
-          // Pega apenas os dados a partir da linha 7 (índice 6 no array)
-          const dataRows = jsonData.slice(6);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = e.target.result;
+          const workbook = XLSX.read(data, {
+            type: 'array',
+            cellDates: true,
+            dateNF: 'yyyy-mm-dd',
+          });
           
-          // Mapeia os dados conforme a especificação:
-          // COLUNA A: Empresa
-          // COLUNA B: Fornecedor
-          // COLUNA D: Observação
-          // COLUNA M: Valor Pago
+          // Pega a primeira planilha
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // Para debug - exibe o conteúdo da primeira célula da coluna M
+          console.log('Conteúdo da célula M7:', worksheet['M7']);
+          
+          // Converte para JSON com cabeçalhos automáticos (A, B, C, etc.)
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+            raw: false,
+            defval: '',
+            header: 'A',
+          });
+          
+          // Log para debug - mostra as primeiras linhas
+          console.log('Primeiras linhas da planilha:', jsonData.slice(0, 10));
+          
+          // Modificação: Pega os dados a partir da linha 7 (índice 6) ou da linha 1 se houver menos de 7 linhas
+          const startIndex = jsonData.length >= 7 ? 6 : 0;
+          const dataRows = jsonData.slice(startIndex);
+          
+          // Log para debug - mostra as colunas da primeira linha
+          if (dataRows.length > 0) {
+            console.log('Colunas disponíveis na primeira linha:', Object.keys(dataRows[0]));
+          }
+          
+          // Mapeia os dados conforme a especificação, mas verifica em várias colunas para o valor
           const formattedData = dataRows.map(row => {
+            // Tentar encontrar o valor em várias colunas potenciais
+            const valorPotencial = row['M'] || row['N'] || row['O'] || row['P'] || row['L'] || '';
+            
             return {
               empresa: row['A'] || '',
               fornecedor: row['B'] || '',
               observacao: row['D'] || '',
-              valorPago: row['M'] || '',
+              valorPago: valorPotencial, // Tenta várias colunas potenciais
               // O orçamento e categoria serão definidos durante a importação
               orcamento: 'MARKETING', // Valor padrão
               categoria: 'DESPESA GERAL' // Valor padrão
@@ -58,24 +69,29 @@ export const readExcelFile = (file) => {
             return row.empresa || row.fornecedor || row.valorPago;
           });
           
-          resolve(formattedData);
-        } else {
-          reject(new Error('O arquivo não contém dados suficientes. Verifique se é o arquivo correto.'));
+          // Log para debug - mostra os dados formatados
+          console.log('Dados formatados:', formattedData.slice(0, 5));
+          
+          // Verifica se há pelo menos um registro válido após a filtragem
+          if (formattedData.length > 0) {
+            resolve(formattedData);
+          } else {
+            reject(new Error('Nenhum dado válido encontrado no arquivo. Verifique se o formato está correto.'));
+          }
+        } catch (error) {
+          console.error('Erro ao processar o arquivo:', error);
+          reject(error);
         }
-      } catch (error) {
-        console.error('Erro ao processar o arquivo:', error);
+      };
+      
+      reader.onerror = (error) => {
+        console.error('Erro ao ler o arquivo:', error);
         reject(error);
-      }
-    };
-    
-    reader.onerror = (error) => {
-      console.error('Erro ao ler o arquivo:', error);
-      reject(error);
-    };
-    
-    reader.readAsArrayBuffer(file);
-  });
-};
+      };
+      
+      reader.readAsArrayBuffer(file);
+    });
+  };
 
 /**
  * Salva os dados de despesas no Parse Server

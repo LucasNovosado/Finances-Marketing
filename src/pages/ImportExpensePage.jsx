@@ -48,9 +48,22 @@ const ImportExpensePage = () => {
     setCurrentStep(2);
   };
 
-  const handleMappingComplete = (mappedData) => {
-    setMappedData(mappedData);
-    setPreviewData(mappedData.slice(0, 10)); // Preview dos primeiros 10 itens
+ // Modificação para o arquivo src/pages/ImportExpensePage.jsx
+// Localizar a função handleMappingComplete e modificá-la assim:
+
+const handleMappingComplete = (mappedData) => {
+    // Preservar exatamente os valores originais
+    const dadosPreservados = mappedData.map(item => {
+      // Certifique-se de que os valores não são modificados
+      return {
+        ...item,
+        // Preservar o valor original sem transformações
+        valorPago: item.valorPago 
+      };
+    });
+    
+    setMappedData(dadosPreservados);
+    setPreviewData(dadosPreservados); // Usar todos os dados sem limitação
     setCurrentStep(3);
   };
 
