@@ -1,0 +1,219 @@
+/* src/components/expenses/ExpenseFilterPanel.css */
+
+.filter-panel {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+
+  }
+  
+  .filter-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .filter-panel-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .filter-panel-actions {
+    display: flex;
+    gap: 0.8rem;
+  }
+  
+  .clear-filters-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    color: #d32f2f;
+    background: none;
+    border: 1px solid #d32f2f;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .clear-filters-btn:hover {
+    background-color: #ffebee;
+  }
+  
+  .toggle-filters-btn {
+    font-size: 0.8rem;
+    color: #4a90e2;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem;
+  }
+  
+  .toggle-filters-btn:hover {
+    text-decoration: underline;
+  }
+  
+  .search-box {
+    position: relative;
+    margin-bottom: 0.5rem;
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #757575;
+  }
+  
+  .search-box input {
+    width: 100%;
+    padding: 0.8rem 1rem 0.8rem 2.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95rem;
+  }
+  
+  .search-box input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+  
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9rem;
+  }
+  
+  .filter-icon {
+    color: #666;
+  }
+  
+  .filter-group select {
+width:300px; 
+  }
+
+  .filter-group input {
+    padding: 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    background-color: white;
+  }
+  
+  .filter-group select:focus,
+  .filter-group input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+  
+  .date-filters,
+  .range-filters {
+    display: flex;
+    gap: 0.8rem;
+  }
+  
+  .date-filter,
+  .range-filter {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  .date-filter label,
+  .range-filter label {
+    font-size: 0.8rem;
+    color: #666;
+  }
+  
+  .expanded-filters {
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .applied-filters {
+    margin-top: 0.5rem;
+  }
+  
+  .applied-filters-title {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+  
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background-color: #e3f2fd;
+    color: #1976d2;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 16px;
+  }
+  
+  .filter-chip button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #1976d2;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+  }
+  
+  .filter-chip button:hover {
+    background-color: rgba(25, 118, 210, 0.1);
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .date-filters,
+    .range-filters {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }

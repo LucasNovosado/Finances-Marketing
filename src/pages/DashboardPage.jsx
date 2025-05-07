@@ -40,6 +40,11 @@ const DashboardPage = () => {
   const navigateToFaturamento = () => {
     navigate('/faturamento');
   };
+  
+  // Função simplificada para navegação para análise detalhada
+  const goToExpenseAnalysis = () => {
+    navigate('/expenses');
+  };
 
   if (!user) {
     return <div className="loading">Carregando...</div>;
@@ -96,6 +101,14 @@ const DashboardPage = () => {
                   onClick={navigateToFaturamento}
                 >
                   Gerenciar faturamento mensal
+                </button>
+              </li>
+              <li>
+                <button 
+                  className="action-button"
+                  onClick={goToExpenseAnalysis}
+                >
+                  Ver análise detalhada de despesas
                 </button>
               </li>
               <li>

@@ -1,0 +1,195 @@
+/* src/components/expenses/ExpenseSummaryStats.css */
+
+.expense-summary-stats {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+  }
+  
+  .stats-title {
+    margin: 0 0 1.2rem 0;
+    font-size: 1.2rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.8rem;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .stat-card {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .total-card {
+    border-left: 4px solid #4CAF50;
+  }
+  
+  .average-card {
+    border-left: 4px solid #2196F3;
+  }
+  
+  .highest-card {
+    border-left: 4px solid #F44336;
+  }
+  
+  .lowest-card {
+    border-left: 4px solid #FFC107;
+  }
+  
+  .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    border-radius: 50%;
+    color: #666;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .total-card .stat-icon {
+    color: #4CAF50;
+  }
+  
+  .average-card .stat-icon {
+    color: #2196F3;
+  }
+  
+  .highest-card .stat-icon {
+    color: #F44336;
+  }
+  
+  .lowest-card .stat-icon {
+    color: #FFC107;
+  }
+  
+  .stat-content {
+    flex: 1;
+  }
+  
+  .stat-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.3rem;
+  }
+  
+  .stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.2rem;
+  }
+  
+  .stat-subtitle {
+    font-size: 0.75rem;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .stats-subtitle {
+    font-size: 1rem;
+    color: #333;
+    margin: 1.5rem 0 0.8rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .top-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .top-item {
+    padding: 0.8rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: #f9f9f9;
+    transition: background-color 0.2s;
+  }
+  
+  .top-item:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .top-item-name {
+    flex: 1;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .top-item-value {
+    font-weight: 600;
+    color: #4a90e2;
+    margin-right: 0.5rem;
+  }
+  
+  .top-item-count {
+    font-size: 0.8rem;
+    color: #888;
+    min-width: 70px;
+    text-align: right;
+  }
+  
+  .more-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    color: #4a90e2;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  
+  .more-items:hover {
+    text-decoration: underline;
+  }
+  
+  /* Para a primeira categoria, orçamento e mês, destaque-os */
+  .top-categories .top-item:first-child,
+  .top-budgets .top-item:first-child,
+  .top-months .top-item:first-child {
+    background-color: #e8f4fd;
+    border-left: 3px solid #4a90e2;
+  }
+  
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+      padding: 0.8rem;
+    }
+    
+    .stat-value {
+      font-size: 1.1rem;
+    }
+  }

@@ -8,6 +8,8 @@ import FaturamentoPage from '../pages/FaturamentoPage';
 import ImportExpensePage from '../pages/ImportExpensePage';
 import { ImportExpenseProvider } from "../contexts/ImportExpenseContext.jsx";
 import authService from '../services/authService';
+import ExpenseDetailPage from '../pages/ExpenseDetailPage';
+
 
 /**
  * Componente que protege rotas que requerem autenticação
@@ -60,6 +62,14 @@ const AppRoutes = () => {
           </PublicRoute>
         } 
       />
+  <Route 
+  path="/expenses" 
+  element={
+    <ProtectedRoute>
+      <ExpenseDetailPage />
+    </ProtectedRoute>
+  } 
+/>
       
       {/* Rota protegida - Dashboard */}
       <Route 

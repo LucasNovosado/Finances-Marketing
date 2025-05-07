@@ -1,0 +1,226 @@
+/* src/components/expenses/ExpenseChartPanel.css */
+
+.expense-chart-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.5rem;
+  }
+  
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .chart-info h2 {
+    margin: 0 0 0.3rem 0;
+    font-size: 1.4rem;
+    color: #333;
+  }
+  
+  .chart-total {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  .chart-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .chart-type-button, .export-chart-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .chart-type-button:hover, .export-chart-button:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .chart-type-button.active {
+    background-color: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+  }
+  
+  .export-chart-button {
+    color: #4a90e2;
+    border-color: #4a90e2;
+  }
+  
+  .export-chart-button:hover {
+    background-color: #e8f1fc;
+  }
+  
+  .chart-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #eee;
+  }
+  
+  .chart-option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  .chart-option-group label {
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 500;
+  }
+  
+  .chart-option-group select {
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    min-width: 120px;
+  }
+  
+  .chart-option-checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 1.6rem;
+  }
+  
+  .chart-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    overflow: hidden;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    padding: 1rem;
+  }
+  
+  .no-data-message {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+  }
+  
+  .no-data-message p {
+    margin: 0.5rem 0;
+  }
+  
+  .chart-legend-table h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    color: #333;
+  }
+  
+  .legend-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .legend-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  
+  .legend-table th {
+    padding: 0.8rem;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+  }
+  
+  .legend-table td {
+    padding: 0.8rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .color-column {
+    width: 30px;
+  }
+  
+  .color-cell {
+    text-align: center;
+  }
+  
+  .color-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin: 0 auto;
+  }
+  
+  .name-column {
+    width: 40%;
+  }
+  
+  .count-column, .percent-column {
+    width: 15%;
+  }
+  
+  .value-column {
+    width: 20%;
+  }
+  
+  .value-cell {
+    font-weight: 500;
+  }
+  
+  .percent-cell {
+    font-weight: 500;
+    color: #4a90e2;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .chart-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .chart-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .chart-options {
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    
+    .chart-option-group {
+      width: 100%;
+    }
+    
+    .chart-option-group select {
+      width: 100%;
+    }
+    
+    .chart-option-checkbox {
+      padding-top: 0;
+    }
+    
+    .chart-container {
+      height: 400px;
+    }
+  }
