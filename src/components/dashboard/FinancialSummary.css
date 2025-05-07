@@ -165,6 +165,23 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   }
   
+  .financial-popup-large {
+    max-width: 90%;
+    width: 1000px;
+    display: flex;
+    flex-direction: column;
+    height: 85vh;
+  }
+  
+  .financial-popup-medium {
+    max-width: 90%;
+    width: 800px;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: 85vh;
+  }
+  
   .financial-popup-header {
     display: flex;
     justify-content: space-between;
@@ -189,8 +206,45 @@
     line-height: 1;
   }
   
+  .financial-popup-tabs {
+    display: flex;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .tab-button {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-weight: 500;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+  
+  .tab-button:hover {
+    background-color: #f1f3f5;
+    color: #495057;
+  }
+  
+  .tab-button.active {
+    color: #4a90e2;
+    border-bottom-color: #4a90e2;
+    background-color: white;
+  }
+  
   .financial-popup-content {
     padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+  
+  .highlight-value {
+    color: #4a90e2;
+    font-weight: 700;
   }
   
   .popup-detail-group {
@@ -260,10 +314,374 @@
     color: #555;
   }
   
+  /* Table Styles */
+  .expenses-table-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .expenses-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .table-title {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .table-title h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+  }
+  
+  .expenses-total {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4a90e2;
+  }
+  
+  .table-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .action-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #495057;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .action-button:hover {
+    background-color: #e9ecef;
+  }
+  
+  .expenses-filters {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+  
+  .filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .filter-field label {
+    font-size: 0.85rem;
+    color: #495057;
+    font-weight: 500;
+  }
+  
+  .filter-field select {
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #495057;
+  }
+  
+  .clear-filters-button {
+    padding: 0.5rem 0.75rem;
+    background-color: #fff;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    border-radius: 4px;
+    cursor: pointer;
+    height: 38px;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+  }
+  
+  .clear-filters-button:hover {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .expenses-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    flex: 1;
+    max-height: 400px;
+  }
+  
+  .expenses-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  
+  .expenses-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+  }
+  
+  .expenses-table th:hover {
+    background-color: #e9ecef;
+  }
+  
+  .sort-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 0.25rem;
+    vertical-align: middle;
+    color: #adb5bd;
+  }
+  
+  .expenses-table th:hover .sort-button {
+    color: #495057;
+  }
+  
+  .expenses-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #dee2e6;
+    color: #495057;
+  }
+  
+  .expenses-table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .expenses-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .value-cell {
+    text-align: right;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  .observation-cell {
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .no-data-message {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-style: italic;
+  }
+  
+  .financial-charts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+  }
+  
+  /* Estilos para seleção de orçamentos */
+  .total-expenses-card {
+    background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+    color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .total-expenses-card h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .total-expenses-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  .expenses-diff {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+  }
+  
+  .financial-summary-details {
+    margin: 1.5rem 0;
+  }
+  
+  .budget-selection-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #dee2e6;
+  }
+  
+  .budget-selection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .budget-selection-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+  }
+  
+  .budget-selection-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .select-all-btn, .deselect-all-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #dee2e6;
+    background-color: white;
+    color: #495057;
+    transition: all 0.2s;
+  }
+  
+  .select-all-btn:hover {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+  }
+  
+  .deselect-all-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+  }
+  
+  .budget-selection-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 0.5rem;
+  }
+  
+  .budget-selection-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 0.25rem;
+    border: 1px solid transparent;
+  }
+  
+  .budget-selection-item:hover {
+    background-color: #e9ecef;
+  }
+  
+  .budget-selection-item.selected {
+    background-color: #e8f4fd;
+    border-color: #b8daff;
+  }
+  
+  .budget-selection-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background-color: white;
+    border: 1px solid #ced4da;
+    margin-right: 0.75rem;
+  }
+  
+  .budget-selection-item.selected .budget-selection-checkbox {
+    background-color: #4a90e2;
+    border-color: #4a90e2;
+    color: white;
+  }
+  
+  .check-icon {
+    color: white;
+  }
+  
+  .x-icon {
+    color: #ced4da;
+  }
+  
+  .budget-selection-name {
+    flex: 1;
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  .budget-selection-value {
+    font-weight: 600;
+    color: #495057;
+  }
+  
+  .chart-info-message {
+    text-align: center;
+    color: #6c757d;
+  }
+  
+  .chart-info-message p {
+    margin: 0.5rem 0;
+  }
+  
   .financial-popup-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid #eaeaea;
-    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .popup-footer-info {
+    display: flex;
+    gap: 1.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
   }
   
   .close-popup-button {
@@ -315,5 +733,18 @@
     
     .metric-value {
       font-size: 1.3rem;
+    }
+    
+    .expenses-table-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .expenses-filters {
+      flex-direction: column;
+    }
+    
+    .filter-field {
+      width: 100%;
     }
   }
