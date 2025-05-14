@@ -26,7 +26,7 @@ const ImportPreview = ({
     'Baterias Bats', 
     'João de Barro', 
     'Imobiliária',
-    'Apucarana', 
+    'Apucarana ', 
     'Alan', 
     'Alexandre', 
     'Wellington', 
