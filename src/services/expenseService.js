@@ -1,6 +1,36 @@
-// src/services/expenseService.js
+// src/services/expenseService.js - VERSÃO COM CORREÇÃO DE FILTROS DE DATA
 
 import Parse from 'parse/dist/parse.min.js';
+
+/**
+ * Cria uma data de início do mês no fuso horário brasileiro
+ * @param {number} mes - Mês (1-12)
+ * @param {number} ano - Ano
+ * @returns {Date} - Data do primeiro dia do mês às 00:00
+ */
+const createStartOfMonthBrazil = (mes, ano) => {
+  const data = new Date();
+  data.setFullYear(ano);
+  data.setMonth(mes - 1);
+  data.setDate(1);
+  data.setHours(0, 0, 0, 0);
+  return data;
+};
+
+/**
+ * Cria uma data de fim do mês no fuso horário brasileiro
+ * @param {number} mes - Mês (1-12)
+ * @param {number} ano - Ano
+ * @returns {Date} - Data do último dia do mês às 23:59:59
+ */
+const createEndOfMonthBrazil = (mes, ano) => {
+  const data = new Date();
+  data.setFullYear(ano);
+  data.setMonth(mes); // Próximo mês
+  data.setDate(0); // Último dia do mês anterior
+  data.setHours(23, 59, 59, 999);
+  return data;
+};
 
 /**
  * Serviço para gerenciar operações relacionadas a despesas
@@ -26,7 +56,7 @@ const expenseService = {
   },
   
   /**
-   * Busca todas as despesas do sistema
+   * Busca todas as despesas do sistema com filtros melhorados para datas
    * @param {Object} options - Opções de consulta
    * @param {Number} options.mes - Filtrar por mês
    * @param {Number} options.ano - Filtrar por ano  
@@ -41,13 +71,34 @@ const expenseService = {
       const Despesa = Parse.Object.extend('DespesasDetalhadas');
       const query = new Parse.Query(Despesa);
       
-      // Adiciona filtros se fornecidos
-      if (mes) {
+      // CORREÇÃO: Melhor filtro de data usando range de datas
+      if (mes && ano) {
+        const inicioMes = createStartOfMonthBrazil(mes, ano);
+        const fimMes = createEndOfMonthBrazil(mes, ano);
+        
+        console.log(`Filtrando despesas entre:`, {
+          inicio: inicioMes.toISOString(),
+          fim: fimMes.toISOString(),
+          inicioLocal: inicioMes.toLocaleString('pt-BR'),
+          fimLocal: fimMes.toLocaleString('pt-BR')
+        });
+        
+        // Usar filtro de range de data
+        query.greaterThanOrEqualTo('dataDespesa', inicioMes);
+        query.lessThanOrEqualTo('dataDespesa', fimMes);
+        
+        // ADICIONAL: Também filtrar pelos campos mes e ano como backup
         query.equalTo('mes', mes);
-      }
-      
-      if (ano) {
         query.equalTo('ano', ano);
+      } else {
+        // Filtros individuais se apenas um for fornecido
+        if (mes) {
+          query.equalTo('mes', mes);
+        }
+        
+        if (ano) {
+          query.equalTo('ano', ano);
+        }
       }
       
       if (orcamento) {
@@ -65,6 +116,24 @@ const expenseService = {
       query.limit(1000);
       
       const results = await query.find();
+      
+      console.log(`Encontradas ${results.length} despesas para os filtros:`, { mes, ano, orcamento, categoria });
+      
+      // Log das primeiras datas encontradas para debug
+      if (results.length > 0) {
+        console.log('Primeiras 3 datas encontradas:');
+        results.slice(0, 3).forEach((item, index) => {
+          const dataDespesa = item.get('dataDespesa');
+          console.log(`${index + 1}:`, {
+            id: item.id,
+            empresa: item.get('empresa'),
+            dataDespesa: dataDespesa?.toISOString(),
+            dataLocal: dataDespesa?.toLocaleString('pt-BR'),
+            mes: item.get('mes'),
+            ano: item.get('ano')
+          });
+        });
+      }
       
       // Converte os objetos Parse para objetos JavaScript simples
       return results.map(item => ({
@@ -95,6 +164,8 @@ const expenseService = {
     try {
       // Busca todas as despesas com os filtros fornecidos
       const expenses = await expenseService.getAllExpenses(options);
+      
+      console.log(`Processando resumo para ${expenses.length} despesas`);
       
       // Agrupa as despesas por orçamento e soma os valores
       const summaryByBudget = expenses.reduce((acc, expense) => {
@@ -176,16 +247,21 @@ const expenseService = {
       throw error;
     }
   },
+  
   /**
- * Retorna o total de despesas para um determinado mês/ano
- * @param {number} mes 
- * @param {number} ano 
- * @returns {Promise<number>}
- */
-getTotalDespesas: async (mes, ano) => {
+   * Retorna o total de despesas para um determinado mês/ano com filtro de data melhorado
+   * @param {number} mes 
+   * @param {number} ano 
+   * @returns {Promise<number>}
+   */
+  getTotalDespesas: async (mes, ano) => {
     try {
       const despesas = await expenseService.getAllExpenses({ mes, ano });
-      return despesas.reduce((total, item) => total + (Number(item.valorPago) || 0), 0);
+      const total = despesas.reduce((total, item) => total + (Number(item.valorPago) || 0), 0);
+      
+      console.log(`Total de despesas para ${mes}/${ano}: R$ ${total.toFixed(2)}`);
+      
+      return total;
     } catch (error) {
       console.error('Erro ao calcular total de despesas:', error);
       throw error;
@@ -213,6 +289,92 @@ getTotalDespesas: async (mes, ano) => {
       return categories.sort();
     } catch (error) {
       console.error('Erro ao buscar categorias disponíveis:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Atualiza uma despesa existente
+   * @param {Object} expenseData - Dados da despesa para atualizar
+   * @returns {Promise<Object>} - Promise resolvida com a despesa atualizada
+   */
+  updateExpense: async (expenseData) => {
+    try {
+      const Despesa = Parse.Object.extend('DespesasDetalhadas');
+      const query = new Parse.Query(Despesa);
+      const expense = await query.get(expenseData.id);
+      
+      if (!expense) {
+        throw new Error('Despesa não encontrada');
+      }
+      
+      // Atualiza os campos da despesa
+      expense.set('empresa', expenseData.empresa);
+      expense.set('fornecedor', expenseData.fornecedor);
+      expense.set('observacao', expenseData.observacao);
+      
+      // Converter o valor para número
+      const valorPago = typeof expenseData.valorPago === 'string'
+        ? parseFloat(expenseData.valorPago.replace(',', '.'))
+        : parseFloat(expenseData.valorPago);
+      
+      expense.set('valorPago', isNaN(valorPago) ? 0 : valorPago);
+      expense.set('categoria', expenseData.categoria);
+      expense.set('orcamento', expenseData.orcamento);
+      
+      // Atualiza a data da despesa com correção de fuso horário
+      if (expenseData.dataDespesa) {
+        const dataDespesa = new Date(expenseData.dataDespesa);
+        if (!isNaN(dataDespesa.getTime())) {
+          // Ajustar para meio-dia para evitar problemas de fuso horário
+          dataDespesa.setHours(12, 0, 0, 0);
+          expense.set('dataDespesa', dataDespesa);
+        }
+      }
+      
+      // Salva as alterações
+      await expense.save();
+      
+      // Retorna os dados atualizados
+      return {
+        id: expense.id,
+        empresa: expense.get('empresa'),
+        fornecedor: expense.get('fornecedor'),
+        observacao: expense.get('observacao'),
+        valorPago: expense.get('valorPago'),
+        categoria: expense.get('categoria'),
+        orcamento: expense.get('orcamento'),
+        dataDespesa: expense.get('dataDespesa'),
+        createdAt: expense.get('createdAt'),
+        updatedAt: expense.get('updatedAt')
+      };
+    } catch (error) {
+      console.error('Erro ao atualizar despesa:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Exclui uma despesa
+   * @param {string} expenseId - ID da despesa a ser excluída
+   * @returns {Promise<boolean>} - Promise resolvida com true se a exclusão for bem-sucedida
+   */
+  deleteExpense: async (expenseId) => {
+    try {
+      const Despesa = Parse.Object.extend('DespesasDetalhadas');
+      const query = new Parse.Query(Despesa);
+      const expense = await query.get(expenseId);
+      
+      if (!expense) {
+        throw new Error('Despesa não encontrada');
+      }
+      
+      // Exclui a despesa
+      await expense.destroy();
+      
+      return true;
+    } catch (error) {
+      console.error('Erro ao excluir despesa:', error);
       throw error;
     }
   }

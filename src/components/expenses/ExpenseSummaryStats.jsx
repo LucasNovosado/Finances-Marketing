@@ -1,7 +1,7 @@
-// src/components/expenses/ExpenseSummaryStats.jsx
+// src/components/expenses/ExpenseSummaryStats.jsx - VERSÃO COM FUNCIONALIDADE DE EXPANDIR
 
 import React, { useState, useEffect } from 'react';
-import { ChevronsUp, ChevronsDown, DollarSign, Calendar, ArrowRight } from 'lucide-react';
+import { ChevronsUp, ChevronsDown, DollarSign, Calendar, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import './ExpenseSummaryStats.css';
 
 const ExpenseSummaryStats = ({ expenses, filters }) => {
@@ -11,9 +11,16 @@ const ExpenseSummaryStats = ({ expenses, filters }) => {
     highest: { value: 0, item: null },
     lowest: { value: Infinity, item: null },
     count: 0,
-    byMonth: [],     // Inicializado como array
-    byCategory: [],  // Inicializado como array
-    byBudget: []     // Inicializado como array
+    byMonth: [],
+    byCategory: [],
+    byBudget: []
+  });
+
+  // Estados para controlar a expansão de cada seção
+  const [expandedSections, setExpandedSections] = useState({
+    categories: false,
+    budgets: false,
+    months: false
   });
 
   // Calcular estatísticas
@@ -32,7 +39,6 @@ const ExpenseSummaryStats = ({ expenses, filters }) => {
       return;
     }
 
-    // Calcular total, média, maior e menor
     let total = 0;
     let highest = { value: 0, item: null };
     let lowest = { value: Infinity, item: null };
@@ -116,6 +122,52 @@ const ExpenseSummaryStats = ({ expenses, filters }) => {
     });
   }, [expenses]);
 
+  // Função para alternar a expansão de uma seção
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Função para renderizar uma lista de itens com opção de expandir
+  const renderExpandableList = (items, sectionKey, title, maxItems = 5) => {
+    const isExpanded = expandedSections[sectionKey];
+    const displayItems = isExpanded ? items : items.slice(0, maxItems);
+    const hasMoreItems = items.length > maxItems;
+
+    return (
+      <div className={`top-${sectionKey}`}>
+        <h4 className="stats-subtitle">{title}</h4>
+        <ul className="top-list">
+          {displayItems.map((item, index) => (
+            <li key={index} className="top-item">
+              <div className="top-item-name">{item.name}</div>
+              <div className="top-item-value">{formatCurrency(item.value)}</div>
+              <div className="top-item-count">{item.count} itens</div>
+            </li>
+          ))}
+          
+          {hasMoreItems && (
+            <li className="more-items" onClick={() => toggleSection(sectionKey)}>
+              <span>
+                {isExpanded 
+                  ? 'Mostrar menos' 
+                  : `+ ${items.length - maxItems} ${sectionKey === 'categories' ? 'categorias' : sectionKey === 'budgets' ? 'orçamentos' : 'meses'}`
+                }
+              </span>
+              {isExpanded ? (
+                <ChevronUp size={14} />
+              ) : (
+                <ChevronDown size={14} />
+              )}
+            </li>
+          )}
+        </ul>
+      </div>
+    );
+  };
+
   // Formatar valor monetário
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -142,64 +194,10 @@ const ExpenseSummaryStats = ({ expenses, filters }) => {
     <div className="expense-summary-stats">
       <h3 className="stats-title">Resumo Estatístico</h3>
 
-
-
-      <div className="top-categories">
-        <h4 className="stats-subtitle">Principais Categorias</h4>
-        <ul className="top-list">
-          {Array.isArray(stats.byCategory) && stats.byCategory.slice(0, 5).map((category, index) => (
-            <li key={index} className="top-item">
-              <div className="top-item-name">{category.name}</div>
-              <div className="top-item-value">{formatCurrency(category.value)}</div>
-              <div className="top-item-count">{category.count} itens</div>
-            </li>
-          ))}
-          {Array.isArray(stats.byCategory) && stats.byCategory.length > 5 && (
-            <li className="more-items">
-              <span>+ {stats.byCategory.length - 5} categorias</span>
-              <ArrowRight size={14} />
-            </li>
-          )}
-        </ul>
-      </div>
-
-      <div className="top-budgets">
-        <h4 className="stats-subtitle">Principais Orçamentos</h4>
-        <ul className="top-list">
-          {Array.isArray(stats.byBudget) && stats.byBudget.slice(0, 5).map((budget, index) => (
-            <li key={index} className="top-item">
-              <div className="top-item-name">{budget.name}</div>
-              <div className="top-item-value">{formatCurrency(budget.value)}</div>
-              <div className="top-item-count">{budget.count} itens</div>
-            </li>
-          ))}
-          {Array.isArray(stats.byBudget) && stats.byBudget.length > 5 && (
-            <li className="more-items">
-              <span>+ {stats.byBudget.length - 5} orçamentos</span>
-              <ArrowRight size={14} />
-            </li>
-          )}
-        </ul>
-      </div>
-
-      <div className="top-months">
-        <h4 className="stats-subtitle">Despesas por Mês</h4>
-        <ul className="top-list">
-          {Array.isArray(stats.byMonth) && stats.byMonth.slice(0, 5).map((month, index) => (
-            <li key={index} className="top-item">
-              <div className="top-item-name">{month.name}</div>
-              <div className="top-item-value">{formatCurrency(month.value)}</div>
-              <div className="top-item-count">{month.count} itens</div>
-            </li>
-          ))}
-          {Array.isArray(stats.byMonth) && stats.byMonth.length > 5 && (
-            <li className="more-items">
-              <span>+ {stats.byMonth.length - 5} meses</span>
-              <ArrowRight size={14} />
-            </li>
-          )}
-        </ul>
-      </div>
+      {/* Renderizar listas expandíveis */}
+      {renderExpandableList(stats.byCategory, 'categories', 'Principais Categorias')}
+      {renderExpandableList(stats.byBudget, 'budgets', 'Principais Orçamentos')}
+      {renderExpandableList(stats.byMonth, 'months', 'Despesas por Mês')}
     </div>
   );
 };

@@ -19,6 +19,14 @@
   z-index: 10;
 }
 
+.value-column, .value-cell {
+    width: 140px;
+    text-align: center;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  
 .page-header h1 {
   margin: 0;
   color: #333;
