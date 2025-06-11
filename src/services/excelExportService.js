@@ -1,7 +1,6 @@
 // src/services/excelExportService.js
 
 import * as XLSX from 'xlsx';
-import faturamentoService from './faturamentoService';
 
 /**
  * Serviço especializado para exportação de dados para Excel
@@ -52,7 +51,7 @@ const excelExportService = {
 
       // Criar primeira aba - Resumo Geral
       console.log('📋 Gerando aba de resumo...');
-      const resumoSheet = await excelExportService.createResumoSheet(expenses, filterInfo);
+      const resumoSheet = excelExportService.createResumoSheet(expenses, filterInfo);
       XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo Geral');
 
       // Criar segunda aba - Despesas Detalhadas
@@ -79,35 +78,18 @@ const excelExportService = {
    * @param {Object} filterInfo - Informações sobre filtros aplicados
    * @returns {Object} - Worksheet do Excel
    */
-  createResumoSheet: async (expenses, filterInfo) => {
+  createResumoSheet: (expenses, filterInfo) => {
     try {
       const data = [];
       
-      // Obter mês e ano do período (usar o primeiro filtro ou data atual)
-      let mesAtual, anoAtual;
-      if (filterInfo.startMonth && filterInfo.startYear) {
-        mesAtual = filterInfo.startMonth;
-        anoAtual = filterInfo.startYear;
-      } else {
-        const dataAtual = new Date();
-        mesAtual = dataAtual.getMonth() + 1;
-        anoAtual = dataAtual.getFullYear();
-      }
-
-      // Obter nome do mês
-      const nomesMeses = [
-        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-      ];
-      const nomeMes = nomesMeses[mesAtual - 1] || 'Mês';
-
       // Cabeçalho principal
       data.push(['RELATÓRIO DE DESPESAS - RESUMO GERAL']);
       data.push(['']); // Linha em branco
 
-      // Título do período
-      data.push([`Despesas Mês ${nomeMes}`]);
-      data.push(['']); // Linha em branco
+      // Informações gerais
+      const agora = new Date();
+      data.push(['Gerado em:', agora.toLocaleString('pt-BR')]);
+      data.push(['Total de registros:', expenses.length]);
       
       // Valor total geral
       const valorTotal = expenses.reduce((sum, expense) => {
@@ -116,37 +98,6 @@ const excelExportService = {
       }, 0);
       
       data.push(['Valor total:', valorTotal]);
-      data.push(['']); // Linha em branco
-
-      // Buscar dados de faturamento
-      let dadosFaturamento = null;
-      try {
-        dadosFaturamento = await faturamentoService.getFaturamentoMensal(mesAtual, anoAtual);
-        console.log('Dados de faturamento obtidos:', dadosFaturamento);
-      } catch (error) {
-        console.warn('Erro ao buscar faturamento:', error);
-        dadosFaturamento = { fatCheio: 0, fatSucata: 0 };
-      }
-
-      // Seção de Faturamento
-      data.push(['DADOS DE FATURAMENTO']);
-      data.push(['']); // Linha em branco
-      
-      data.push(['Faturamento Total (com sucata)', dadosFaturamento.fatCheio || 0]);
-      data.push(['Faturamento (sem sucata)', dadosFaturamento.fatSucata || 0]);
-      data.push(['']); // Linha em branco
-
-      // Calcular percentuais utilizados
-      const percentualComSucata = dadosFaturamento.fatCheio > 0 
-        ? (valorTotal / dadosFaturamento.fatCheio * 100) 
-        : 0;
-      
-      const percentualSemSucata = dadosFaturamento.fatSucata > 0 
-        ? (valorTotal / dadosFaturamento.fatSucata * 100) 
-        : 0;
-
-      data.push(['Percentual do Faturamento COM Sucata', `${percentualComSucata.toFixed(2)}%`]);
-      data.push(['Percentual do Faturamento SEM Sucata', `${percentualSemSucata.toFixed(2)}%`]);
       data.push(['']); // Linha em branco
 
       // Informações de filtros (se aplicáveis)
@@ -184,42 +135,46 @@ const excelExportService = {
 
       // Resumo por categoria
       data.push(['RESUMO POR CATEGORIA']);
-      data.push(['Categoria', 'Quantidade', 'Valor Total']);
+      data.push(['Categoria', 'Quantidade', 'Valor Total', 'Percentual']);
       
       const resumoPorCategoria = excelExportService.groupByField(expenses, 'categoria');
       const categoriasOrdenadas = Object.entries(resumoPorCategoria)
         .sort((a, b) => b[1].total - a[1].total);
 
       categoriasOrdenadas.forEach(([categoria, dados]) => {
+        const percentual = valorTotal > 0 ? (dados.total / valorTotal * 100) : 0;
         data.push([
           categoria || 'Sem Categoria',
           dados.count,
-          dados.total
+          dados.total,
+          `${percentual.toFixed(2)}%`
         ]);
       });
 
       data.push(['']); // Linha em branco
-      data.push(['TOTAL CATEGORIAS', '', valorTotal]);
+      data.push(['TOTAL CATEGORIAS', '', valorTotal, '100.00%']);
       data.push(['']); // Linha em branco
 
       // Resumo por orçamento
       data.push(['RESUMO POR ORÇAMENTO']);
-      data.push(['Orçamento', 'Quantidade', 'Valor Total']);
+      data.push(['Orçamento', 'Quantidade', 'Valor Total', 'Percentual']);
       
       const resumoPorOrcamento = excelExportService.groupByField(expenses, 'orcamento');
       const orcamentosOrdenados = Object.entries(resumoPorOrcamento)
         .sort((a, b) => b[1].total - a[1].total);
 
       orcamentosOrdenados.forEach(([orcamento, dados]) => {
+        const percentual = valorTotal > 0 ? (dados.total / valorTotal * 100) : 0;
         data.push([
           orcamento || 'Sem Orçamento',
           dados.count,
-          dados.total
+          dados.total,
+          `${percentual.toFixed(2)}%`
         ]);
       });
 
       data.push(['']); // Linha em branco
-      data.push(['TOTAL ORÇAMENTOS', '', valorTotal]);
+      data.push(['TOTAL ORÇAMENTOS', '', valorTotal, '100.00%']);
 
       // Criar worksheet
       const worksheet = XLSX.utils.aoa_to_sheet(data);
@@ -346,22 +301,17 @@ const excelExportService = {
     try {
       // Definir largura das colunas
       worksheet['!cols'] = [
-        { wch: 35 }, // Coluna A - Descrições (aumentada para acomodar textos maiores)
-        { wch: 20 }, // Coluna B - Valores/Quantidades
-        { wch: 18 }  // Coluna C - Valores
+        { wch: 25 }, // Coluna A - Descrições
+        { wch: 15 }, // Coluna B - Quantidades
+        { wch: 18 }, // Coluna C - Valores
+        { wch: 12 }  // Coluna D - Percentuais
       ];
 
       // Adicionar formato de número para valores monetários
-      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:C1');
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:D1');
       
       for (let row = range.s.r; row <= range.e.r; row++) {
-        const cellB = XLSX.utils.encode_cell({ r: row, c: 1 });
         const cellC = XLSX.utils.encode_cell({ r: row, c: 2 });
-        
-        // Formatar células de valor monetário
-        if (worksheet[cellB] && typeof worksheet[cellB].v === 'number') {
-          worksheet[cellB].z = '_("R$"* #,##0.00_);_("R$"* \(#,##0.00\);_("R$"* "-"??_);_(@_)';
-        }
         if (worksheet[cellC] && typeof worksheet[cellC].v === 'number') {
           worksheet[cellC].z = '_("R$"* #,##0.00_);_("R$"* \(#,##0.00\);_("R$"* "-"??_);_(@_)';
         }
@@ -429,7 +379,7 @@ const excelExportService = {
       } = options;
       
       const workbook = XLSX.utils.book_new();
-      const resumoSheet = await excelExportService.createResumoSheet(expenses, filterInfo);
+      const resumoSheet = excelExportService.createResumoSheet(expenses, filterInfo);
       
       XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo');
       XLSX.writeFile(workbook, `${fileName}.xlsx`);
