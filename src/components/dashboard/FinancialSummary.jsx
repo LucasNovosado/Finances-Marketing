@@ -1,7 +1,7 @@
 // src/components/dashboard/FinancialSummary.jsx
 
 import React, { useState, useEffect } from 'react';
-import { Info, X, Check } from 'lucide-react';
+import { Info, X, Check, BarChart3 } from 'lucide-react';
 import expenseService from '../../services/expenseService';
 import faturamentoService from '../../services/faturamentoService';
 import './FinancialSummary.css';
@@ -196,8 +196,13 @@ const FinancialSummary = ({ filters }) => {
       <div className="financial-summary-card">
         <div className="financial-summary-header">
           <h3>Análise Financeira</h3>
-          <button className="info-button" onClick={() => setShowPopup(true)} aria-label="Ver detalhes do faturamento">
-            <Info size={20} />
+          <button 
+            className="detailed-financial-btn" 
+            onClick={() => setShowPopup(true)} 
+            aria-label="Ver detalhes do faturamento"
+          >
+            <BarChart3 size={18} />
+            Percentual de Faturamento Detalhado
           </button>
         </div>
 

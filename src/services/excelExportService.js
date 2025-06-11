@@ -1,6 +1,7 @@
 // src/services/excelExportService.js
 
 import * as XLSX from 'xlsx';
+import faturamentoService from './faturamentoService';
 
 /**
  * Serviço especializado para exportação de dados para Excel
@@ -51,7 +52,7 @@ const excelExportService = {
 
       // Criar primeira aba - Resumo Geral
       console.log('📋 Gerando aba de resumo...');
-      const resumoSheet = excelExportService.createResumoSheet(expenses, filterInfo);
+      const resumoSheet = await excelExportService.createResumoSheet(expenses, filterInfo);
       XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo Geral');
 
       // Criar segunda aba - Despesas Detalhadas
@@ -78,26 +79,88 @@ const excelExportService = {
    * @param {Object} filterInfo - Informações sobre filtros aplicados
    * @returns {Object} - Worksheet do Excel
    */
-  createResumoSheet: (expenses, filterInfo) => {
+  createResumoSheet: async (expenses, filterInfo) => {
     try {
       const data = [];
       
+      // Obter o mês/ano do filtro ou da primeira despesa
+      let mesReferencia = null;
+      let anoReferencia = null;
+      
+      if (filterInfo.startMonth && filterInfo.startYear) {
+        mesReferencia = filterInfo.startMonth;
+        anoReferencia = filterInfo.startYear;
+      } else if (expenses.length > 0) {
+        // Usar a data da primeira despesa como referência
+        const primeiraData = new Date(expenses[0].dataDespesa || expenses[0].createdAt);
+        mesReferencia = primeiraData.getMonth() + 1;
+        anoReferencia = primeiraData.getFullYear();
+      }
+
+      // Obter nome do mês
+      const nomesMeses = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
+      const nomeMes = mesReferencia ? nomesMeses[mesReferencia - 1] : 'Período Selecionado';
+      
       // Cabeçalho principal
-      data.push(['RELATÓRIO DE DESPESAS - RESUMO GERAL']);
+      data.push([`DESPESAS DO MÊS: ${nomeMes.toUpperCase()}`]);
       data.push(['']); // Linha em branco
 
-      // Informações gerais
-      const agora = new Date();
-      data.push(['Gerado em:', agora.toLocaleString('pt-BR')]);
-      data.push(['Total de registros:', expenses.length]);
-      
-      // Valor total geral
-      const valorTotal = expenses.reduce((sum, expense) => {
+      // Valor total geral das despesas
+      const valorTotalDespesas = expenses.reduce((sum, expense) => {
         const valor = Number(expense.valorPago);
         return sum + (isNaN(valor) ? 0 : valor);
       }, 0);
       
-      data.push(['Valor total:', valorTotal]);
+      data.push(['Valor Total das Despesas:', valorTotalDespesas]);
+      data.push(['']); // Linha em branco
+
+      // Buscar dados de faturamento se temos o mês e ano
+      let dadosFaturamento = null;
+      if (mesReferencia && anoReferencia) {
+        try {
+          // Usar a mesma lógica do FinancialSummary
+          dadosFaturamento = await faturamentoService.getFaturamentoByMonthYear(mesReferencia, anoReferencia);
+          console.log('Dados de faturamento obtidos:', dadosFaturamento);
+        } catch (error) {
+          console.warn('Erro ao buscar dados de faturamento:', error);
+        }
+      }
+
+      // Adicionar informações de faturamento
+      data.push(['INFORMAÇÕES DE FATURAMENTO']);
+      data.push(['']); // Linha em branco
+      
+      // Usar a mesma estrutura do FinancialSummary: totalComSucata e totalSemSucata
+      const faturamentoComSucata = dadosFaturamento?.totalComSucata || 0;
+      const faturamentoSemSucata = dadosFaturamento?.totalSemSucata || 0;
+      
+      // Faturamento com sucata
+      data.push(['Faturamento com Sucata:', faturamentoComSucata]);
+      
+      // Faturamento sem sucata
+      data.push(['Faturamento sem Sucata:', faturamentoSemSucata]);
+      
+      data.push(['']); // Linha em branco
+      
+      // Percentuais utilizados
+      data.push(['PERCENTUAL UTILIZADO']);
+      
+      // Calcular percentual em relação ao faturamento com sucata (mesma lógica do FinancialSummary)
+      const percentualComSucata = faturamentoComSucata > 0 
+        ? (valorTotalDespesas / faturamentoComSucata * 100) 
+        : 0;
+      
+      // Calcular percentual em relação ao faturamento sem sucata
+      const percentualSemSucata = faturamentoSemSucata > 0 
+        ? (valorTotalDespesas / faturamentoSemSucata * 100) 
+        : 0;
+      
+      data.push(['% em relação ao Faturamento COM Sucata:', `${percentualComSucata.toFixed(2)}%`]);
+      data.push(['% em relação ao Faturamento SEM Sucata:', `${percentualSemSucata.toFixed(2)}%`]);
+      
       data.push(['']); // Linha em branco
 
       // Informações de filtros (se aplicáveis)
@@ -135,46 +198,40 @@ const excelExportService = {
 
       // Resumo por categoria
       data.push(['RESUMO POR CATEGORIA']);
-      data.push(['Categoria', 'Quantidade', 'Valor Total', 'Percentual']);
+      data.push(['Categoria', 'Valor Total']);
       
       const resumoPorCategoria = excelExportService.groupByField(expenses, 'categoria');
       const categoriasOrdenadas = Object.entries(resumoPorCategoria)
         .sort((a, b) => b[1].total - a[1].total);
 
       categoriasOrdenadas.forEach(([categoria, dados]) => {
-        const percentual = valorTotal > 0 ? (dados.total / valorTotal * 100) : 0;
         data.push([
           categoria || 'Sem Categoria',
-          dados.count,
-          dados.total,
-          `${percentual.toFixed(2)}%`
+          dados.total
         ]);
       });
 
       data.push(['']); // Linha em branco
-      data.push(['TOTAL CATEGORIAS', '', valorTotal, '100.00%']);
+      data.push(['TOTAL CATEGORIAS', valorTotalDespesas]);
       data.push(['']); // Linha em branco
 
       // Resumo por orçamento
       data.push(['RESUMO POR ORÇAMENTO']);
-      data.push(['Orçamento', 'Quantidade', 'Valor Total', 'Percentual']);
+      data.push(['Orçamento', 'Valor Total']);
       
       const resumoPorOrcamento = excelExportService.groupByField(expenses, 'orcamento');
       const orcamentosOrdenados = Object.entries(resumoPorOrcamento)
         .sort((a, b) => b[1].total - a[1].total);
 
       orcamentosOrdenados.forEach(([orcamento, dados]) => {
-        const percentual = valorTotal > 0 ? (dados.total / valorTotal * 100) : 0;
         data.push([
           orcamento || 'Sem Orçamento',
-          dados.count,
-          dados.total,
-          `${percentual.toFixed(2)}%`
+          dados.total
         ]);
       });
 
       data.push(['']); // Linha em branco
-      data.push(['TOTAL ORÇAMENTOS', '', valorTotal, '100.00%']);
+      data.push(['TOTAL ORÇAMENTOS', valorTotalDespesas]);
 
       // Criar worksheet
       const worksheet = XLSX.utils.aoa_to_sheet(data);
@@ -301,17 +358,24 @@ const excelExportService = {
     try {
       // Definir largura das colunas
       worksheet['!cols'] = [
-        { wch: 25 }, // Coluna A - Descrições
+        { wch: 35 }, // Coluna A - Descrições (mais larga)
         { wch: 15 }, // Coluna B - Quantidades
         { wch: 18 }, // Coluna C - Valores
-        { wch: 12 }  // Coluna D - Percentuais
+        { wch: 12 }  // Coluna D - Extra
       ];
 
       // Adicionar formato de número para valores monetários
       const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:D1');
       
       for (let row = range.s.r; row <= range.e.r; row++) {
+        // Formatar valores na coluna B (índice 1) e C (índice 2)
+        const cellB = XLSX.utils.encode_cell({ r: row, c: 1 });
         const cellC = XLSX.utils.encode_cell({ r: row, c: 2 });
+        
+        if (worksheet[cellB] && typeof worksheet[cellB].v === 'number') {
+          worksheet[cellB].z = '_("R$"* #,##0.00_);_("R$"* \(#,##0.00\);_("R$"* "-"??_);_(@_)';
+        }
+        
         if (worksheet[cellC] && typeof worksheet[cellC].v === 'number') {
           worksheet[cellC].z = '_("R$"* #,##0.00_);_("R$"* \(#,##0.00\);_("R$"* "-"??_);_(@_)';
         }
@@ -379,7 +443,7 @@ const excelExportService = {
       } = options;
       
       const workbook = XLSX.utils.book_new();
-      const resumoSheet = excelExportService.createResumoSheet(expenses, filterInfo);
+      const resumoSheet = await excelExportService.createResumoSheet(expenses, filterInfo);
       
       XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo');
       XLSX.writeFile(workbook, `${fileName}.xlsx`);

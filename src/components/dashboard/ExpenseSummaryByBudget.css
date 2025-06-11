@@ -110,9 +110,42 @@
     background-color: #4a90e2;
     color: white;
   }
+
+  /* NOVO: Estilo do botão de análise detalhada */
+  .detailed-analysis-btn {
+    display: block;
+    margin: 1rem auto 0;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    min-width: 280px;
+  }
+  
+  .detailed-analysis-btn:hover {
+    background: linear-gradient(135deg, #218838, #1fa589);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  }
+  
+  .detailed-analysis-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  }
   
   @media (max-width: 768px) {
     .budget-cards {
       grid-template-columns: 1fr;
+    }
+
+    .detailed-analysis-btn {
+      width: 100%;
+      min-width: auto;
     }
   }

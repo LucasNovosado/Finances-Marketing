@@ -1,10 +1,12 @@
 // src/components/dashboard/ExpenseSummaryByBudget.jsx
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './ExpenseSummaryByBudget.css';
 
 const ExpenseSummaryByBudget = ({ summaryData, formatCurrency }) => {
   const [showAll, setShowAll] = useState(false);
+  const navigate = useNavigate();
   
   // Por padrão, mostra apenas os 5 principais orçamentos
   const displayData = showAll ? summaryData : summaryData.slice(0, 5);
@@ -31,6 +33,11 @@ const ExpenseSummaryByBudget = ({ summaryData, formatCurrency }) => {
       };
     }
     return {};
+  };
+
+  // Função para navegar para análise detalhada
+  const goToExpenseAnalysis = () => {
+    navigate('/expenses');
   };
   
   return (
@@ -71,6 +78,14 @@ const ExpenseSummaryByBudget = ({ summaryData, formatCurrency }) => {
           {showAll ? 'Mostrar menos' : `Mostrar todos (${summaryData.length})`}
         </button>
       )}
+
+      {/* Botão para ir para análise detalhada - NOVO */}
+      <button 
+        className="detailed-analysis-btn"
+        onClick={goToExpenseAnalysis}
+      >
+        Ver análise detalhada de despesas
+      </button>
     </div>
   );
 };
