@@ -1,7 +1,7 @@
 // src/components/expenses/EditExpenseForm.jsx
 
 import React, { useState, useEffect } from 'react';
-import { Save, X } from 'lucide-react';
+import { Save, X, Trash2 } from 'lucide-react';
 import expenseService from '../../services/expenseService';
 
 /**
@@ -10,6 +10,7 @@ import expenseService from '../../services/expenseService';
  * @param {Object} props.expense - Dados da despesa a ser editada
  * @param {Function} props.onCancel - Função a ser chamada ao cancelar a edição
  * @param {Function} props.onSaveSuccess - Função a ser chamada após edição bem-sucedida
+ * @param {Function} props.onDeleteSuccess - Função a ser chamada após exclusão bem-sucedida
  * @param {Array} props.categories - Lista de categorias disponíveis
  * @param {Array} props.budgets - Lista de orçamentos disponíveis
  */
@@ -17,10 +18,12 @@ const EditExpenseForm = ({
   expense, 
   onCancel, 
   onSaveSuccess,
+  onDeleteSuccess,
   categories = [], 
   budgets = []
 }) => {
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [formData, setFormData] = useState({
     id: '',
@@ -91,6 +94,42 @@ const EditExpenseForm = ({
       setSaveError(`Erro ao salvar: ${err.message}`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Excluir a despesa
+  const handleDelete = async () => {
+    if (!formData.id) {
+      setSaveError('ID da despesa não encontrado');
+      return;
+    }
+
+    // Pede confirmação ao usuário
+    const confirmDelete = window.confirm(
+      `Tem certeza que deseja excluir esta despesa?\n\n` +
+      `Empresa: ${formData.empresa}\n` +
+      `Valor: R$ ${formData.valorPago}\n` +
+      `Categoria: ${formData.categoria}\n\n` +
+      `Esta ação não pode ser desfeita.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setDeleting(true);
+      setSaveError('');
+      
+      // Chama o serviço para excluir a despesa
+      const result = await expenseService.deleteExpense(formData.id);
+      
+      if (result && onDeleteSuccess) {
+        onDeleteSuccess(formData.id);
+      }
+    } catch (err) {
+      console.error('Erro ao excluir despesa:', err);
+      setSaveError(`Erro ao excluir: ${err.message}`);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -186,14 +225,24 @@ const EditExpenseForm = ({
         <button 
           className="edit-cancel-button" 
           onClick={onCancel}
-          disabled={saving}
+          disabled={saving || deleting}
         >
           <X size={16} /> Cancelar
         </button>
+        
+        <button 
+          className="edit-delete-button" 
+          onClick={handleDelete}
+          disabled={saving || deleting}
+          title="Excluir despesa"
+        >
+          <Trash2 size={16} /> {deleting ? 'Excluindo...' : 'Excluir'}
+        </button>
+        
         <button 
           className="edit-save-button" 
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || deleting}
         >
           <Save size={16} /> {saving ? 'Salvando...' : 'Salvar Alterações'}
         </button>

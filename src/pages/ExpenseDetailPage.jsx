@@ -1,16 +1,17 @@
-// src/pages/ExpenseDetailPage.jsx - VERSÃO COM FILTROS POR MÊS
+// src/pages/ExpenseDetailPage.jsx - VERSÃO COMPLETA COM POPUP DE ADICIONAR DESPESA
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import ExpenseFilterPanel from '../components/expenses/ExpenseFilterPanel';
 import ExpenseDetailTable from '../components/expenses/ExpenseDetailTable';
 import ExpenseChartPanel from '../components/expenses/ExpenseChartPanel';
 import ExpenseSummaryStats from '../components/expenses/ExpenseSummaryStats';
+import AddExpensePopup from '../components/expenses/AddExpensePopup';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorMessage from '../components/common/ErrorMessage';
 import expenseService from '../services/expenseService';
 import './ExpenseDetailPage.css';
-
 
 const ExpenseDetailPage = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const ExpenseDetailPage = () => {
   const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [budgets, setBudgets] = useState([]);
+  const [showAddExpensePopup, setShowAddExpensePopup] = useState(false);
   
   // Filtros atualizados para trabalhar com mês/ano
   const currentDate = new Date();
@@ -166,6 +168,46 @@ const ExpenseDetailPage = () => {
     // expenseService.exportData(filteredExpenses, format);
   };
 
+  // Função para lidar com o sucesso ao adicionar nova despesa
+  const handleAddExpenseSuccess = async (newExpense) => {
+    try {
+      console.log('Nova despesa adicionada:', newExpense);
+      
+      // Recarregar a lista de despesas para incluir a nova
+      const [expensesData] = await Promise.all([
+        expenseService.getAllExpenses({}) // Busca todas novamente
+      ]);
+      
+      setExpenses(expensesData);
+      
+      // Mostrar notificação de sucesso
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10001;
+        font-weight: 500;
+      `;
+      notification.textContent = 'Despesa adicionada com sucesso!';
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 3000);
+      
+    } catch (err) {
+      console.error('Erro ao recarregar despesas:', err);
+    }
+  };
+
   // Função para obter nome do mês
   const getMesNome = (mesNumero) => {
     const meses = [
@@ -202,6 +244,14 @@ const ExpenseDetailPage = () => {
           </p>
         </div>
         <div className="page-actions">
+          <button 
+            className="add-expense-button"
+            onClick={() => setShowAddExpensePopup(true)}
+            title="Adicionar nova despesa manualmente"
+          >
+            <Plus size={18} />
+            Adicionar Despesa
+          </button>
           <button className="back-button" onClick={() => navigate('/dashboard')}>
             Voltar ao Dashboard
           </button>
@@ -254,6 +304,15 @@ const ExpenseDetailPage = () => {
           )}
         </main>
       </div>
+
+      {/* Popup para adicionar despesa */}
+      <AddExpensePopup
+        isOpen={showAddExpensePopup}
+        onClose={() => setShowAddExpensePopup(false)}
+        onSave={handleAddExpenseSuccess}
+        categories={categories}
+        budgets={budgets}
+      />
     </div>
   );
 };

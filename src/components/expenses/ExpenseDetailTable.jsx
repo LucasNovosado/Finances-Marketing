@@ -1,8 +1,10 @@
 // src/components/expenses/ExpenseDetailTable.jsx
 
 import React, { useState, useEffect } from 'react';
-import { Download, ChevronUp, ChevronDown, FileText, Calendar, DollarSign, Tag, Briefcase, ArrowUp, ArrowDown, Edit, Save, X, FileSpreadsheet } from 'lucide-react';
+import { Download, ChevronUp, ChevronDown, FileText, Calendar, DollarSign, Tag, Briefcase, ArrowUp, ArrowDown, Edit, Save, X, FileSpreadsheet, Trash2 } from 'lucide-react';
 import excelExportService from '../../services/excelExportService';
+import DeleteExpenseButton from './DeleteExpenseButton';
+import EditExpenseForm from './EditExpenseForm';
 import './ExpenseDetailTable.css';
 import expenseService from '../../services/expenseService';
 
@@ -21,6 +23,13 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [expenseList, setExpenseList] = useState(expenses); // Estado local para gerenciar a lista
+  const [deleteSuccess, setDeleteSuccess] = useState('');
+
+  // Atualizar a lista local quando as props mudarem
+  useEffect(() => {
+    setExpenseList(expenses);
+  }, [expenses]);
 
   // Buscar categorias e orçamentos disponíveis
   useEffect(() => {
@@ -40,6 +49,38 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
     fetchOptions();
   }, []);
 
+  // Função para lidar com sucesso na exclusão
+  const handleDeleteSuccess = (deletedId) => {
+    // Remove o item da lista local
+    setExpenseList(prevList => prevList.filter(expense => expense.id !== deletedId));
+    
+    // Mostra mensagem de sucesso
+    setDeleteSuccess('Lançamento excluído com sucesso!');
+    
+    // Remove a mensagem após 3 segundos
+    setTimeout(() => {
+      setDeleteSuccess('');
+    }, 3000);
+
+    // Se estava expandido, remove da lista de expandidos
+    setExpandedRows(prev => {
+      const updated = { ...prev };
+      delete updated[deletedId];
+      return updated;
+    });
+
+    // Se estava sendo editado, cancela a edição
+    if (editMode === deletedId) {
+      setEditMode(null);
+      setEditData({});
+    }
+  };
+
+  // Função para lidar com erro na exclusão
+  const handleDeleteError = (errorMessage) => {
+    alert(errorMessage); // Ou você pode implementar um sistema de notificação mais sofisticado
+  };
+
   // Função para exportar para Excel completo
   const handleExportExcel = async () => {
     try {
@@ -49,7 +90,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
       const filterInfo = {
         startDate: filters.startDate,
         endDate: filters.endDate,
-        startMonth: filters.startMonth, // Incluir mês/ano do filtro
+        startMonth: filters.startMonth,
         startYear: filters.startYear,
         endMonth: filters.endMonth,
         endYear: filters.endYear,
@@ -87,7 +128,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
       }
 
       // Exportar usando o serviço
-      await excelExportService.exportExpensesToExcel(expenses, {
+      await excelExportService.exportExpensesToExcel(expenseList, {
         fileName,
         includeFilters: true,
         filterInfo
@@ -112,7 +153,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
       const filterInfo = {
         startDate: filters.startDate,
         endDate: filters.endDate,
-        startMonth: filters.startMonth, // Incluir mês/ano do filtro
+        startMonth: filters.startMonth,
         startYear: filters.startYear,
         endMonth: filters.endMonth,
         endYear: filters.endYear,
@@ -136,7 +177,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
         fileName += `_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`;
       }
 
-      await excelExportService.exportResumoToExcel(expenses, {
+      await excelExportService.exportResumoToExcel(expenseList, {
         fileName,
         filterInfo
       });
@@ -172,7 +213,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
         fileName += `_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`;
       }
 
-      await excelExportService.exportToCSV(expenses, { fileName });
+      await excelExportService.exportToCSV(expenseList, { fileName });
       showExportSuccess();
       
     } catch (error) {
@@ -265,7 +306,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
   };
 
   // Ordenar os dados
-  const sortedData = [...expenses].sort((a, b) => {
+  const sortedData = [...expenseList].sort((a, b) => {
     const key = sortConfig.key;
     
     if (!a[key] && !b[key]) return 0;
@@ -326,39 +367,25 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
     setSaveError('');
   };
 
-  // Atualizar o campo sendo editado
-  const handleEditChange = (field, value) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // Salvar as alterações
-  const saveChanges = async () => {
-    if (!editData.empresa || !editData.valorPago || !editData.categoria || !editData.orcamento) {
-      setSaveError('Preencha todos os campos obrigatórios (Empresa, Valor, Categoria e Orçamento)');
-      return;
-    }
+  // Callback após edição bem-sucedida
+  const handleEditSuccess = (updatedExpense) => {
+    // Atualizar a lista local com os dados editados
+    setExpenseList(prevList => 
+      prevList.map(expense => 
+        expense.id === updatedExpense.id ? updatedExpense : expense
+      )
+    );
     
-    try {
-      setSaving(true);
-      setSaveError('');
-      
-      // Simular salvamento - substitua por: await expenseService.updateExpense(editData);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setEditMode(null);
-      setEditData({});
-      
-      alert('Alterações salvas com sucesso!');
-      
-    } catch (error) {
-      console.error('Erro ao salvar alterações:', error);
-      setSaveError(`Erro ao salvar: ${error.message}`);
-    } finally {
-      setSaving(false);
-    }
+    // Sair do modo de edição
+    setEditMode(null);
+    setEditData({});
+    setSaveError('');
+    
+    // Mostrar mensagem de sucesso
+    setDeleteSuccess('Lançamento editado com sucesso!');
+    setTimeout(() => {
+      setDeleteSuccess('');
+    }, 3000);
   };
 
   // Formatar data para input
@@ -424,111 +451,14 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
     if (editMode === expense.id) {
       return (
         <tr className="edit-row" key={expense.id}>
-          <td colSpan="8">
-            <div className="edit-form">
-              {saveError && <div className="edit-error">{saveError}</div>}
-              
-              <div className="edit-form-row">
-                <div className="edit-form-group">
-                  <label>Empresa/Fornecedor</label>
-                  <input
-                    type="text"
-                    value={editData.empresa}
-                    onChange={(e) => handleEditChange('empresa', e.target.value)}
-                    placeholder="Nome da empresa"
-                  />
-                </div>
-                
-                <div className="edit-form-group">
-                  <label>Fornecedor (opcional)</label>
-                  <input
-                    type="text"
-                    value={editData.fornecedor}
-                    onChange={(e) => handleEditChange('fornecedor', e.target.value)}
-                    placeholder="Fornecedor"
-                  />
-                </div>
-              </div>
-              
-              <div className="edit-form-row">
-                <div className="edit-form-group">
-                  <label>Descrição/Observação</label>
-                  <textarea
-                    value={editData.observacao}
-                    onChange={(e) => handleEditChange('observacao', e.target.value)}
-                    placeholder="Descrição da despesa"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              
-              <div className="edit-form-row">
-                <div className="edit-form-group">
-                  <label>Data</label>
-                  <input
-                    type="date"
-                    value={editData.dataDespesa}
-                    onChange={(e) => handleEditChange('dataDespesa', e.target.value)}
-                  />
-                </div>
-                
-                <div className="edit-form-group">
-                  <label>Valor Pago (R$)</label>
-                  <input
-                    type="number"
-                    value={editData.valorPago}
-                    onChange={(e) => handleEditChange('valorPago', e.target.value)}
-                    step="0.01"
-                    min="0"
-                  />
-                </div>
-              </div>
-              
-              <div className="edit-form-row">
-                <div className="edit-form-group">
-                  <label>Categoria</label>
-                  <select
-                    value={editData.categoria}
-                    onChange={(e) => handleEditChange('categoria', e.target.value)}
-                  >
-                    <option value="">Selecione uma categoria</option>
-                    {categories.map((category, index) => (
-                      <option key={index} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="edit-form-group">
-                  <label>Orçamento</label>
-                  <select
-                    value={editData.orcamento}
-                    onChange={(e) => handleEditChange('orcamento', e.target.value)}
-                  >
-                    <option value="">Selecione um orçamento</option>
-                    {budgets.map((budget, index) => (
-                      <option key={index} value={budget}>{budget}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="edit-form-actions">
-                <button 
-                  className="edit-cancel-button" 
-                  onClick={cancelEdit}
-                  disabled={saving}
-                >
-                  <X size={16} /> Cancelar
-                </button>
-                <button 
-                  className="edit-save-button" 
-                  onClick={saveChanges}
-                  disabled={saving}
-                >
-                  <Save size={16} /> {saving ? 'Salvando...' : 'Salvar Alterações'}
-                </button>
-              </div>
-            </div>
+          <td colSpan="9">
+            <EditExpenseForm
+              expense={expense}
+              onCancel={cancelEdit}
+              onSaveSuccess={handleEditSuccess}
+              categories={categories}
+              budgets={budgets}
+            />
           </td>
         </tr>
       );
@@ -570,6 +500,13 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
             <Edit size={16} />
           </button>
         </td>
+        <td className="actions-column">
+          <DeleteExpenseButton
+            expense={expense}
+            onDeleteSuccess={handleDeleteSuccess}
+            onError={handleDeleteError}
+          />
+        </td>
       </tr>
     );
   };
@@ -579,14 +516,24 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
       <div className="table-header">
         <div className="table-info">
           <h2>Despesas</h2>
-          <span className="total-count">Total: {expenses.length} registros encontrados</span>
+          <span className="total-count">Total: {expenseList.length} registros encontrados</span>
+          {deleteSuccess && (
+            <div style={{ 
+              color: '#28a745', 
+              fontSize: '0.9rem', 
+              marginTop: '0.5rem',
+              fontWeight: '500' 
+            }}>
+              {deleteSuccess}
+            </div>
+          )}
         </div>
         <div className="table-actions">
           <div className="export-dropdown">
             <button 
               className="export-button primary-export"
               onClick={handleExportExcel}
-              disabled={exporting || expenses.length === 0}
+              disabled={exporting || expenseList.length === 0}
               title="Exportar planilha Excel completa com 2 abas: Resumo e Detalhes"
             >
               <FileSpreadsheet size={16} />
@@ -596,7 +543,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
             <button 
               className="export-button secondary-export"
               onClick={handleExportResumo}
-              disabled={exporting || expenses.length === 0}
+              disabled={exporting || expenseList.length === 0}
               title="Exportar apenas resumo executivo"
             >
               <FileText size={16} />
@@ -606,7 +553,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
             <button 
               className="export-button secondary-export"
               onClick={handleExportCSV}
-              disabled={exporting || expenses.length === 0}
+              disabled={exporting || expenseList.length === 0}
               title="Exportar arquivo CSV para uso em outras planilhas"
             >
               <Download size={16} />
@@ -616,7 +563,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
         </div>
       </div>
 
-      {expenses.length === 0 ? (
+      {expenseList.length === 0 ? (
         <div className="no-data-container">
           <p>Nenhuma despesa encontrada com os filtros aplicados.</p>
         </div>
@@ -682,13 +629,14 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
                       {renderSortIcon('valorPago')}
                     </div>
                   </th>
-                  <th className="actions-column">Ações</th>
+                  <th className="actions-column">Editar</th>
+                  <th className="actions-column">Excluir</th>
                 </tr>
               </thead>
               <tbody className="expense-table-body">
                 {currentItems.length === 0 ? (
                   <tr className="no-data-row">
-                    <td colSpan="8" className="no-data-cell">
+                    <td colSpan="9" className="no-data-cell">
                       Nenhum registro encontrado com os filtros aplicados
                     </td>
                   </tr>
@@ -698,7 +646,7 @@ const ExpenseDetailTable = ({ expenses, filters = {}, onExport }) => {
                       {renderRow(expense)}
                       {expandedRows[expense.id] && !editMode && (
                         <tr className="details-row" key={`${expense.id}-details`}>
-                          <td colSpan="8">
+                          <td colSpan="9">
                             <div className="expense-details">
                               <div className="details-section">
                                 <h4>Detalhes completos</h4>

@@ -23,6 +23,42 @@ const ExpenseChartPanel = ({ expenses, categories, budgets }) => {
     '#8B572A', '#417505', '#9B9B9B', '#0078D7', '#FF6900'
   ];
 
+  // Função para ordenar dados de mês cronologicamente
+  const sortByMonth = (data) => {
+    const monthOrder = {
+      'janeiro': 1, 'fevereiro': 2, 'março': 3, 'abril': 4, 'maio': 5, 'junho': 6,
+      'julho': 7, 'agosto': 8, 'setembro': 9, 'outubro': 10, 'novembro': 11, 'dezembro': 12
+    };
+
+    return data.sort((a, b) => {
+      // Extrair mês e ano do nome
+      const parseMonthYear = (str) => {
+  const parts = str.toLowerCase().trim().split(' de ');
+  if (parts.length === 2) {
+    // Formato: "março de 2025"
+    const month = monthOrder[parts[0]] || 0;
+    const year = parseInt(parts[1]) || 0;
+    return { month, year };
+  } else {
+    // Formato alternativo: "março 2025" ou apenas "março"
+    const allParts = str.toLowerCase().trim().split(' ');
+    const month = monthOrder[allParts[0]] || 0;
+    const year = allParts[1] ? parseInt(allParts[1]) : new Date().getFullYear();
+    return { month, year };
+  }
+};
+
+      const dateA = parseMonthYear(a.name);
+      const dateB = parseMonthYear(b.name);
+
+      // Primeiro ordenar por ano, depois por mês
+      if (dateA.year !== dateB.year) {
+        return dateA.year - dateB.year;
+      }
+      return dateA.month - dateB.month;
+    });
+  };
+
   // Preparar dados para gráficos
   useEffect(() => {
     if (expenses.length === 0) return;
@@ -59,21 +95,27 @@ const ExpenseChartPanel = ({ expenses, categories, budgets }) => {
       // Converter para array
       let result = Object.values(groups);
       
-      // Ordenar
-      if (chartOptions.sortBy === 'value') {
-        result.sort((a, b) => chartOptions.sortDirection === 'asc' ? a.value - b.value : b.value - a.value);
+      // CORREÇÃO: Ordenação especial para dados de mês
+      if (groupBy === 'mes') {
+        // Para dados de mês, sempre ordenar cronologicamente (crescente)
+        result = sortByMonth(result);
       } else {
-        result.sort((a, b) => {
-          if (chartOptions.sortDirection === 'asc') {
-            return a.name.localeCompare(b.name);
-          } else {
-            return b.name.localeCompare(a.name);
-          }
-        });
+        // Para outras categorias, aplicar a ordenação normal
+        if (chartOptions.sortBy === 'value') {
+          result.sort((a, b) => chartOptions.sortDirection === 'asc' ? a.value - b.value : b.value - a.value);
+        } else {
+          result.sort((a, b) => {
+            if (chartOptions.sortDirection === 'asc') {
+              return a.name.localeCompare(b.name);
+            } else {
+              return b.name.localeCompare(a.name);
+            }
+          });
+        }
       }
       
-      // Limitar aos N itens principais (se aplicável)
-      if (chartOptions.showTopOnly) {
+      // Limitar aos N itens principais (se aplicável e não for agrupamento por mês)
+      if (chartOptions.showTopOnly && groupBy !== 'mes') {
         result = result.slice(0, chartOptions.topCount);
       }
       
@@ -187,26 +229,8 @@ const ExpenseChartPanel = ({ expenses, categories, budgets }) => {
 
   // Renderizar gráfico de linha
   const renderLineChart = () => {
-    // Para gráfico de linha, primeiro ordenar por tempo se for agrupado por mês
+    // Para gráfico de linha com dados de mês, os dados já estão ordenados cronologicamente
     let lineData = [...chartData];
-    
-    if (groupBy === 'mes') {
-      // Extrai mês e ano do nome da chave
-      const parseDate = (str) => {
-        const months = {
-          'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3, 'maio': 4, 'junho': 5,
-          'julho': 6, 'agosto': 7, 'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11
-        };
-        
-        const parts = str.split(' ');
-        const month = months[parts[0].toLowerCase()];
-        const year = parseInt(parts[1]);
-        
-        return new Date(year, month, 1);
-      };
-      
-      lineData.sort((a, b) => parseDate(a.name) - parseDate(b.name));
-    }
     
     return (
       <ResponsiveContainer width="100%" height={500}>
@@ -318,57 +342,71 @@ const ExpenseChartPanel = ({ expenses, categories, budgets }) => {
           </select>
         </div>
         
-        <div className="chart-option-group">
-          <label htmlFor="sortBy">Ordenar por:</label>
-          <select 
-            id="sortBy" 
-            name="sortBy"
-            value={chartOptions.sortBy} 
-            onChange={handleChartOptionChange}
-          >
-            <option value="value">Valor</option>
-            <option value="name">Nome</option>
-          </select>
-        </div>
+        {/* Mostrar opções de ordenação apenas quando não for agrupamento por mês */}
+        {groupBy !== 'mes' && (
+          <>
+            <div className="chart-option-group">
+              <label htmlFor="sortBy">Ordenar por:</label>
+              <select 
+                id="sortBy" 
+                name="sortBy"
+                value={chartOptions.sortBy} 
+                onChange={handleChartOptionChange}
+              >
+                <option value="value">Valor</option>
+                <option value="name">Nome</option>
+              </select>
+            </div>
+            
+            <div className="chart-option-group">
+              <label htmlFor="sortDirection">Direção:</label>
+              <select 
+                id="sortDirection" 
+                name="sortDirection"
+                value={chartOptions.sortDirection} 
+                onChange={handleChartOptionChange}
+              >
+                <option value="desc">Decrescente</option>
+                <option value="asc">Crescente</option>
+              </select>
+            </div>
+            
+            <div className="chart-option-group chart-option-checkbox">
+              <input 
+                type="checkbox" 
+                id="showTopOnly" 
+                name="showTopOnly"
+                checked={chartOptions.showTopOnly} 
+                onChange={handleChartOptionChange}
+              />
+              <label htmlFor="showTopOnly">Mostrar apenas os principais</label>
+            </div>
+            
+            {chartOptions.showTopOnly && (
+              <div className="chart-option-group">
+                <label htmlFor="topCount">Quantidade:</label>
+                <select 
+                  id="topCount" 
+                  name="topCount"
+                  value={chartOptions.topCount} 
+                  onChange={handleChartOptionChange}
+                >
+                  <option value={5}>Top 5</option>
+                  <option value={10}>Top 10</option>
+                  <option value={15}>Top 15</option>
+                  <option value={20}>Top 20</option>
+                </select>
+              </div>
+            )}
+          </>
+        )}
         
-        <div className="chart-option-group">
-          <label htmlFor="sortDirection">Direção:</label>
-          <select 
-            id="sortDirection" 
-            name="sortDirection"
-            value={chartOptions.sortDirection} 
-            onChange={handleChartOptionChange}
-          >
-            <option value="desc">Decrescente</option>
-            <option value="asc">Crescente</option>
-          </select>
-        </div>
-        
-        <div className="chart-option-group chart-option-checkbox">
-          <input 
-            type="checkbox" 
-            id="showTopOnly" 
-            name="showTopOnly"
-            checked={chartOptions.showTopOnly} 
-            onChange={handleChartOptionChange}
-          />
-          <label htmlFor="showTopOnly">Mostrar apenas os principais</label>
-        </div>
-        
-        {chartOptions.showTopOnly && (
+        {/* Mostrar informação especial quando for agrupamento por mês */}
+        {groupBy === 'mes' && (
           <div className="chart-option-group">
-            <label htmlFor="topCount">Quantidade:</label>
-            <select 
-              id="topCount" 
-              name="topCount"
-              value={chartOptions.topCount} 
-              onChange={handleChartOptionChange}
-            >
-              <option value={5}>Top 5</option>
-              <option value={10}>Top 10</option>
-              <option value={15}>Top 15</option>
-              <option value={20}>Top 20</option>
-            </select>
+            <small style={{ color: '#666', fontStyle: 'italic' }}>
+              Os meses são exibidos em ordem cronológica crescente
+            </small>
           </div>
         )}
       </div>
