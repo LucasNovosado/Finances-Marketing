@@ -72,10 +72,18 @@ const FinancialSummary = ({ filters }) => {
         // Converter para array e ordenar por valor
         const budgetArray = Object.values(budgetGroups).sort((a, b) => b.total - a.total);
         
-        // Inicializar todos os orçamentos como incluídos
+        // Orçamentos que devem ser pré-selecionados
+        const preSelectedBudgets = [
+          'Rede Única de Baterias',
+          'Baterias Bats', 
+          'João de Barro',
+          'Imobiliária'
+        ];
+        
+        // Inicializar apenas os orçamentos específicos como incluídos
         const initialIncludedBudgets = {};
         budgetArray.forEach(budget => {
-          initialIncludedBudgets[budget.name] = true;
+          initialIncludedBudgets[budget.name] = preSelectedBudgets.includes(budget.name);
         });
         
         setIncludedBudgets(initialIncludedBudgets);
@@ -90,14 +98,18 @@ const FinancialSummary = ({ filters }) => {
           limitePercentual: limitePercentual, // Usar 1% em vez do valor do banco
         });
         
-        // Cálculos iniciais (com todos os orçamentos incluídos)
-        const percentualComSucata = fatCheio > 0 ? (totalDespesas / fatCheio * 100) : 0;
-        const percentualSemSucata = fatSucata > 0 ? (totalDespesas / fatSucata * 100) : 0;
+        // Cálculos iniciais (apenas com os orçamentos pré-selecionados)
+        const totalDespesasPreSelecionadas = budgetArray
+          .filter(budget => preSelectedBudgets.includes(budget.name))
+          .reduce((sum, budget) => sum + budget.total, 0);
+          
+        const percentualComSucata = fatCheio > 0 ? (totalDespesasPreSelecionadas / fatCheio * 100) : 0;
+        const percentualSemSucata = fatSucata > 0 ? (totalDespesasPreSelecionadas / fatSucata * 100) : 0;
         const valorLimiteCom = fatCheio * limitePercentual / 100;
-        const percentualUtilizadoComSucata = valorLimiteCom > 0 ? (totalDespesas / valorLimiteCom * 100) : 0;
+        const percentualUtilizadoComSucata = valorLimiteCom > 0 ? (totalDespesasPreSelecionadas / valorLimiteCom * 100) : 0;
         
         setCalculatedData({
-          totalDespesas,
+          totalDespesas: totalDespesasPreSelecionadas,
           percentualComSucata,
           percentualSemSucata, 
           valorLimite: valorLimiteCom,
@@ -165,6 +177,22 @@ const FinancialSummary = ({ filters }) => {
       allDeselected[budget.name] = false;
     });
     setIncludedBudgets(allDeselected);
+  };
+
+  // Seleciona apenas os orçamentos padrão
+  const selectDefaultBudgets = () => {
+    const preSelectedBudgets = [
+      'Rede Única de Baterias',
+      'Baterias Bats', 
+      'João de Barro',
+      'Imobiliária'
+    ];
+    
+    const defaultSelected = {};
+    expensesByBudget.forEach(budget => {
+      defaultSelected[budget.name] = preSelectedBudgets.includes(budget.name);
+    });
+    setIncludedBudgets(defaultSelected);
   };
 
   // Obter classe de cor de status com base no percentual de utilização
@@ -312,6 +340,7 @@ const FinancialSummary = ({ filters }) => {
                   <h4>Orçamentos Incluídos no Cálculo</h4>
                   <div className="budget-selection-actions">
                     <button className="select-all-btn" onClick={selectAllBudgets}>Selecionar Todos</button>
+                    <button className="select-all-btn" onClick={selectDefaultBudgets}>Padrão</button>
                     <button className="deselect-all-btn" onClick={deselectAllBudgets}>Desmarcar Todos</button>
                   </div>
                 </div>
